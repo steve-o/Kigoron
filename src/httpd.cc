@@ -19,13 +19,15 @@
 #endif
 
 kigoron::httpd_t::httpd_t (
-	)
+	) :
+	http_sock_ (INVALID_SOCKET)
 {
 }
 
 kigoron::httpd_t::~httpd_t()
 {
 	DLOG(INFO) << "~httpd_t";
+	Close();
 /* Summary output */
 	VLOG(3) << "Httpd summary: {"
 		" }";
@@ -41,11 +43,10 @@ kigoron::httpd_t::Initialize()
 	struct sockaddr_in6 http_addr;
 	in_port_t http_port = 7580;
 	char hostname[NI_MAXHOST];
-	SOCKET http_sock = INVALID_SOCKET;
 
 /* Create socket */
-	http_sock = socket (AF_INET6, SOCK_STREAM, 0 /* unspecified */);
-	if (INVALID_SOCKET == http_sock) {
+	http_sock_ = socket (AF_INET6, SOCK_STREAM, 0 /* unspecified */);
+	if (INVALID_SOCKET == http_sock_) {
 		const int save_errno = WSAGetLastError();
 		char errbuf[1024];
 		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
@@ -70,7 +71,7 @@ kigoron::httpd_t::Initialize()
 	http_addr.sin6_family = AF_INET6;
 	http_addr.sin6_addr = in6addr_any;
 	http_addr.sin6_port = htons (http_port);
-	rc = bind (http_sock, (struct sockaddr*)&http_addr, sizeof(http_addr));
+	rc = bind (http_sock_, (struct sockaddr*)&http_addr, sizeof(http_addr));
 	if (0 != rc) {
 		const int save_errno = WSAGetLastError();
 		char errbuf[1024];
@@ -97,7 +98,7 @@ kigoron::httpd_t::Initialize()
 	}
 
 /* Listen */
-	rc = listen (http_sock, backlog);
+	rc = listen (http_sock_, backlog);
 	if (0 != rc) {
 		const int save_errno = WSAGetLastError();
 		char errbuf[1024];
@@ -114,6 +115,12 @@ kigoron::httpd_t::Initialize()
 			", \"backlog\": \"SOMAXCONN\""
 			" }";
 		goto cleanup;
+	}
+
+/* Non-blocking */
+	{
+		u_long mode = 1;
+		ioctlsocket (http_sock_, FIONBIO, &mode);
 	}
 
 /* Resolve hostname for display */
@@ -138,15 +145,21 @@ kigoron::httpd_t::Initialize()
 
 	LOG(INFO) << "Web interface http://" << hostname << ":" << http_port << "/";
 
-	closesocket (http_sock);
-	http_sock = INVALID_SOCKET;
-
 	return true;
 
 cleanup:
-	closesocket (http_sock);
-	http_sock = INVALID_SOCKET;
+	closesocket (http_sock_);
+	http_sock_ = INVALID_SOCKET;
 	return false;
+}
+
+void
+kigoron::httpd_t::Close()
+{
+	if (INVALID_SOCKET != http_sock_) {
+		closesocket (http_sock_);
+		http_sock_ = INVALID_SOCKET;
+	}
 }
 
 /* eof */

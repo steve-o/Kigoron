@@ -13,8 +13,10 @@ namespace kigoron
 		~httpd_t();
 
 		bool Initialize();
+		void Close();
 
 	private:
+		SOCKET http_sock_;
 	};
 
 } /* namespace kigoron */
