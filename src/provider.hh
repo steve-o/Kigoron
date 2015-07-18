@@ -30,6 +30,7 @@
 #include "client.hh"
 #include "config.hh"
 #include "deleter.hh"
+#include "httpd.hh"
 
 namespace kigoron
 {
@@ -161,6 +162,8 @@ namespace kigoron
 		std::shared_ptr<upa_t> upa_;
 /* Server socket for new connections */
 		RsslServer* rssl_sock_;
+/* Built in HTTP server. */
+		std::shared_ptr<httpd_t> httpd_;
 /* This flag is set to false when Run should return. */
 		boost::atomic_bool keep_running_;
 

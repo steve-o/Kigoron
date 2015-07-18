@@ -111,6 +111,11 @@ kigoron::provider_t::Initialize()
 		rssl_sock_ = s;
 	}
 
+/* Built in HTTPD server. */
+	httpd_.reset (new httpd_t());
+	if (!(bool)httpd_ || !httpd_->Initialize())
+		return false;
+
 	return true;
 }
 
@@ -205,6 +210,9 @@ kigoron::provider_t::Close()
 	}
 /* 5) Cleanup */
 	clients_.clear();
+
+/* Drop http port. */
+	httpd_.reset();
 
 /* Closing listening socket. */
 	if (nullptr != rssl_sock_) {

@@ -80,7 +80,6 @@ add_definitions(
 	-D_VARIADIC_MAX=10
 # production release
 ##	-DOFFICIAL_BUILD
-	-DENABLE_LEAK_TRACKER
 )
 
 # SEH Exceptions.
@@ -124,6 +123,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /d2Zi+")
 set(cxx-sources
 	src/client.cc
 	src/config.cc
+	src/httpd.cc
 	src/main.cc
 	src/kigoron.cc
 	src/provider.cc
