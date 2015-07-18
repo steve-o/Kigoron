@@ -9,6 +9,8 @@ project (Kigoron)
 # Thomson Reuters Robust Foundation API
 if (MSVC12)     
 	set(UPA_BUILD_COMPILER "VS120")
+## CMake 3.2.3: no support MSVC 2013 for Boost so explicitly set compiler flag.
+	set(Boost_COMPILER "-vc120")
 elseif (MSVC11)     
 	set(UPA_BUILD_COMPILER "VS110")
 elseif (MSVC10)
@@ -33,7 +35,7 @@ set(UPA_LIBRARIES
 )
 
 # Boost headers plus built libraries
-set(BOOST_ROOT D:/boost_1_54_0)
+set(BOOST_ROOT D:/boost_1_58_0)
 set(BOOST_LIBRARYDIR ${BOOST_ROOT}/stage/lib)
 set(Boost_USE_STATIC_LIBS ON)
 find_package (Boost 1.50 COMPONENTS atomic chrono thread REQUIRED)
