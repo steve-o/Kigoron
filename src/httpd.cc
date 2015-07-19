@@ -18,6 +18,16 @@
 #	define SHUT_WR		SD_SEND
 #endif
 
+namespace net {
+
+namespace {
+
+const int kReadBufSize = 4096;
+
+}  // namespace
+
+}  // namespace net
+
 kigoron::http_connection_t::http_connection_t (
 	SOCKET s,
 	const std::string& name
@@ -83,15 +93,11 @@ kigoron::http_connection_t::OnCanWriteWithoutBlocking()
 bool
 kigoron::http_connection_t::Read()
 {
-	for (;;)
-	{
-/* grow buffer as needed */
-		if (bufoff_ + 1024  > buflen_) {
-			buf_ = (char*)realloc (buf_, buflen_ + 1024);
-			buflen_ += 1024;
-		}
-		const ssize_t bytes_read = recv (sock_, buf_ + bufoff_, buflen_ - bufoff_, 0);
-		if (bytes_read < 0) {
+	char buf[net::kReadBufSize + 1];	// +1 for null termination.
+	int len;
+	do {
+		len = recv (sock_, buf, net::kReadBufSize, 0);
+		if (len < 0) {
 			const int save_errno = WSAGetLastError();
 			if (WSAEINTR == save_errno || WSAEWOULDBLOCK == save_errno)
 				return true;
@@ -108,29 +114,27 @@ kigoron::http_connection_t::Read()
 				", \"text\": \"" << errbuf << "\""
 				" }";
 			return false;
+		} else {
+			DidRead (buf, len);
 		}
-/* complete */                  
-		if (strstr (buf_, "\r\n\r\n"))
-			break;
-	}
+	} while (len == net::kReadBufSize);
+}
 
-/* process request, e.g. GET /index.html HTTP/1.1\r\n
- */
-	buf_[ buflen_ - 1 ] = '\0';
-	if (0 != memcmp (buf_, "GET ", strlen("GET "))) {
-/* 501 (not implemented) */
-		return false;
-	}
+void
+kigoron::http_connection_t::DidRead (
+	const char* data,
+	int length)
+{
+	request_parser_.ProcessChunk (chromium::StringPiece (data, length));
+	if (net::HttpRequestParser::ACCEPTED == request_parser_.ParseRequest())
+		OnRequest (request_parser_.GetRequest());
+}
 
-	char* request_uri = buf_ + strlen("GET ");
-	char* p = request_uri;
-	do {
-		if (*p == '?' || *p == ' ') {
-			*p = '\0';
-			break;
-		}
-	} while (*(++p));
-
+void
+kigoron::http_connection_t::OnRequest (
+	std::shared_ptr<net::HttpRequest> request
+	)
+{
 /* HTTP/1.1 ...
  * Content-Type: text/html; charset=UTF-8
  * Cache-Control: no-cache, no-store, max-age=0, must-revalidate
@@ -160,7 +164,6 @@ kigoron::http_connection_t::Read()
 	buf_ = strdup (str.str().c_str());
 
 	state_ = HTTP_STATE_WRITE;
-	return true;
 }
 
 /* returns true on success, false to abort connection.

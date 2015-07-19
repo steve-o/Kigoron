@@ -12,6 +12,8 @@
 #include <list>
 #include <memory>
 
+#include "net/http_request.hh"
+
 #ifdef _WIN32           
 #	define in_port_t	uint16_t
 #	define ssize_t		SSIZE_T
@@ -42,6 +44,8 @@ namespace kigoron
 
 	private:
 		bool Read();
+		void DidRead (const char* data, int length);
+		void OnRequest (std::shared_ptr<net::HttpRequest> request);
 		bool Finwait();
 		bool Write();
 
@@ -51,6 +55,7 @@ namespace kigoron
 		char* buf_;
 		size_t buflen_;
 		size_t bufoff_;
+		net::HttpRequestParser request_parser_;
 	};
 
 	class provider_t;
