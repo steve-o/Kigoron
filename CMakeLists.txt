@@ -142,11 +142,14 @@ set(cxx-sources
 	src/chromium/string_piece.cc
 	src/chromium/string_split.cc
 	src/chromium/string_util.cc
+	src/chromium/stringprintf.cc
 	src/chromium/synchronization/lock.cc
 	src/chromium/synchronization/lock_impl_win.cc
 	src/chromium/vlog.cc
 	src/googleurl/url_parse.cc
 	src/net/http_request.cc
+	src/net/http_response.cc
+	src/net/http_status_code.cc
 )
 
 include_directories(
