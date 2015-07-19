@@ -701,8 +701,10 @@ kigoron::kigoron_t::Start()
 			mainloop_shutdown_ = true;
 			mainloop_cond_.notify_one();
 		}));
+		return true;
+	}  else {
+		return false;
 	}
-	return true;
 }
 
 void

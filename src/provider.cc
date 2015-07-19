@@ -383,6 +383,9 @@ kigoron::provider_t::Run()
 	in_tv_.tv_sec = 0;
 	in_tv_.tv_usec = 1000 * 100;	// 100ms timeout
 
+	if ((bool)httpd_)
+		FD_SET (httpd_->sock(), &in_rfds_);
+
 	for (;;) {
 		bool did_work = DoWork();
 
@@ -514,6 +517,49 @@ kigoron::provider_t::DoWork()
 			++it;
 		}
 	}
+
+/* New HTTP connection */
+	if (FD_ISSET (httpd_->sock(), &out_rfds_)) {
+		FD_CLR (httpd_->sock(), &out_rfds_);
+		auto c = httpd_->Accept();
+		if ((bool)c) {
+			httpd_->connections_.emplace_back (c);
+			FD_SET (c->sock(), &in_rfds_);
+			FD_SET (c->sock(), &in_wfds_);
+			FD_SET (c->sock(), &in_efds_);
+			LOG(INFO) << "HTTP client socket created: { "
+				  "\"clientIP\": \"" << c->name() << "\""
+				", \"socketId\": " << c->sock() << ""
+			" }";
+		}
+		did_work = true;
+	}
+	for (auto it = httpd_->connections_.begin(); it != httpd_->connections_.end();) {
+		auto c = *it;
+		if (FD_ISSET (c->sock(), &out_rfds_)) {
+			FD_CLR (c->sock(), &out_rfds_);
+			if (!c->OnCanReadWithoutBlocking())
+				FD_SET (c->sock(), &out_efds_);
+			did_work = true;
+		}
+		if (FD_ISSET (c->sock(), &out_wfds_)) {
+			FD_CLR (c->sock(), &out_wfds_);
+			if (!c->OnCanWriteWithoutBlocking())
+				FD_SET (c->sock(), &out_efds_);
+			did_work = true;
+		}
+		if (FD_ISSET (c->sock(), &out_efds_)) {
+			auto jt = it++;
+			httpd_->connections_.erase (jt);
+			FD_CLR (c->sock(), &in_rfds_);
+			FD_CLR (c->sock(), &in_wfds_);
+			FD_CLR (c->sock(), &in_efds_);
+			c->Close();
+		} else {
+			++it;
+		}
+	}
+
 	return did_work;
 }
 
