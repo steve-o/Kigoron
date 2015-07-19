@@ -118,6 +118,7 @@ kigoron::http_connection_t::Read()
 			DidRead (buf, len);
 		}
 	} while (len == net::kReadBufSize);
+	return true;
 }
 
 void
@@ -135,35 +136,11 @@ kigoron::http_connection_t::OnRequest (
 	std::shared_ptr<net::HttpRequest> request
 	)
 {
-/* HTTP/1.1 ...
- * Content-Type: text/html; charset=UTF-8
- * Cache-Control: no-cache, no-store, max-age=0, must-revalidate
- * Pragma: no-cache
- * Expires: Fri, 01 Jan 1990 00:00:00 GMT
- * Date: ...
- * X-Content-Type-Options: nosniff
- * X-Frame-Options: SAMEORIGIN
- * X-XSS-Protection: 1; mode=block
- * Content-Length: ...
- * Server: moo
- */
-
-/* Cache-Control:public, max-age=31033761
- * Connection:keep-alive
- */
-
-	std::stringstream str;
-	str <<  "HTTP/1.0 200 OK\r\n"
-		"Content-Length: 2\r\n"
-		"Content-Type: text/html\r\n"
-		"Connection: close\r\n"
-		"\r\n"
-		"hi";
-	if (buflen_ > 0) free (buf_);
-	buflen_ = str.str().size();
-	buf_ = strdup (str.str().c_str());
-
-	state_ = HTTP_STATE_WRITE;
+	LOG(WARNING) << "Request not handled. Returning 404: "
+			<< request->relative_url;
+	auto not_found_response = std::make_shared<net::BasicHttpResponse>();
+	not_found_response->set_code (net::HTTP_NOT_FOUND);
+	SendResponse (std::move (not_found_response));
 }
 
 /* returns true on success, false to abort connection.
@@ -179,6 +156,20 @@ kigoron::http_connection_t::Finwait()
 			return true;
 	}
 	return false;
+}
+
+void
+kigoron::http_connection_t::SendResponse (
+	std::shared_ptr<net::HttpResponse> response
+	)
+{
+	const std::string response_string = response->ToResponseString();
+	if (buflen_ > 0) free (buf_);
+	buflen_ = response_string.size();
+	buf_ = (char*)malloc (buflen_);
+	memcpy (buf_, response_string.c_str(), buflen_);
+	bufoff_ = 0;
+	state_ = HTTP_STATE_WRITE;
 }
 
 /* returns true on success, false to abort connection.
