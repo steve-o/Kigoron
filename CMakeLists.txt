@@ -150,6 +150,7 @@ set(cxx-sources
 	src/net/http_request.cc
 	src/net/http_response.cc
 	src/net/http_status_code.cc
+	src/net/io_buffer.cc
 )
 
 include_directories(
