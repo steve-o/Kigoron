@@ -238,7 +238,7 @@ kigoron::httpd_t::Initialize()
 	char hostname[NI_MAXHOST];
 	int rc;
 
-	listen_sock_ = CreateAndBind ("::", 7580);
+	listen_sock_ = CreateAndListen ("::", 7580);
 	if (INVALID_SOCKET == listen_sock_)
 		return false;
 /* Resolve hostname for display */
@@ -265,7 +265,7 @@ kigoron::httpd_t::Initialize()
 }
 
 SOCKET
-kigoron::httpd_t::CreateAndBind (
+kigoron::httpd_t::CreateAndListen (
 	const std::string& ip,
 	in_port_t port
 	)

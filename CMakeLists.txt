@@ -138,6 +138,7 @@ set(cxx-sources
 	src/chromium/file_util_win.cc
 	src/chromium/memory/singleton.cc
 	src/chromium/logging.cc
+	src/chromium/string_number_conversions.cc
 	src/chromium/string_piece.cc
 	src/chromium/string_split.cc
 	src/chromium/string_util.cc
@@ -145,6 +146,7 @@ set(cxx-sources
 	src/chromium/synchronization/lock_impl_win.cc
 	src/chromium/vlog.cc
 	src/googleurl/url_parse.cc
+	src/net/http_request.cc
 )
 
 include_directories(

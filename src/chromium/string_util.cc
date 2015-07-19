@@ -4,6 +4,8 @@
 
 #include "string_util.hh"
 
+#include "logging.hh"
+
 const char kWhitespaceASCII[] = {
   0x09,    // <control-0009> to <control-000D>
   0x0A,
@@ -66,3 +68,58 @@ TrimPositions TrimWhitespace(const std::string& input,
   return TrimWhitespaceASCII(input, positions, output);
 }
 
+template<class StringType>
+void DoReplaceSubstringsAfterOffset(StringType* str,
+                                    typename StringType::size_type start_offset,
+                                    const StringType& find_this,
+                                    const StringType& replace_with,
+                                    bool replace_all) {
+  if ((start_offset == StringType::npos) || (start_offset >= str->length()))
+    return;
+
+  DCHECK(!find_this.empty());
+  for (typename StringType::size_type offs(str->find(find_this, start_offset));
+      offs != StringType::npos; offs = str->find(find_this, offs)) {
+    str->replace(offs, find_this.length(), replace_with);
+    offs += replace_with.length();
+
+    if (!replace_all)
+      break;
+  }
+}
+
+void ReplaceFirstSubstringAfterOffset(std::string* str,
+                                      std::string::size_type start_offset,
+                                      const std::string& find_this,
+                                      const std::string& replace_with) {
+  DoReplaceSubstringsAfterOffset(str, start_offset, find_this, replace_with,
+                                 false);  // replace first instance
+}
+
+// The following code is compatible with the OpenBSD lcpy interface.  See:
+//   http://www.gratisoft.us/todd/papers/strlcpy.html
+//   ftp://ftp.openbsd.org/pub/OpenBSD/src/lib/libc/string/{wcs,str}lcpy.c
+
+namespace {
+
+template <typename CHAR>
+size_t lcpyT(CHAR* dst, const CHAR* src, size_t dst_size) {
+  for (size_t i = 0; i < dst_size; ++i) {
+    if ((dst[i] = src[i]) == 0)  // We hit and copied the terminating NULL.
+      return i;
+  }
+
+  // We were left off at dst_size.  We over copied 1 byte.  Null terminate.
+  if (dst_size != 0)
+    dst[dst_size - 1] = 0;
+
+  // Count the rest of the |src|, and return it's length in characters.
+  while (src[dst_size]) ++dst_size;
+  return dst_size;
+}
+
+}  // namespace
+
+size_t chromium::strlcpy(char* dst, const char* src, size_t dst_size) {
+  return lcpyT<char>(dst, src, dst_size);
+}

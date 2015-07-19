@@ -71,7 +71,7 @@ namespace kigoron
 		}
 
 	private:
-		SOCKET CreateAndBind (const std::string& ip, in_port_t port);
+		SOCKET CreateAndListen (const std::string& ip, in_port_t port);
 
 		SOCKET listen_sock_;
 		std::list<std::shared_ptr<http_connection_t>> connections_;
