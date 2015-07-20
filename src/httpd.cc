@@ -35,9 +35,6 @@ kigoron::http_connection_t::http_connection_t (
 	: sock_ (s)
 	, name_ (name)
 	, state_ (HTTP_STATE_READ)
-	, buf_ (nullptr)
-	, buflen_ (0)
-	, bufoff_ (0)
 {
 }
 
@@ -53,12 +50,6 @@ kigoron::http_connection_t::Close()
 	if (INVALID_SOCKET != sock_) {
 		closesocket (sock_);
 		sock_ = INVALID_SOCKET;
-	}
-	if (buflen_ > 0) {
-		free (buf_);
-		buf_ = nullptr;
-		buflen_ = 0;
-		bufoff_ = 0;
 	}
 }
 
@@ -93,7 +84,7 @@ kigoron::http_connection_t::OnCanWriteWithoutBlocking()
 bool
 kigoron::http_connection_t::Read()
 {
-	char buf[net::kReadBufSize + 1];	// +1 for null termination.
+	char buf[net::kReadBufSize];
 	int len;
 	do {
 		len = recv (sock_, buf, net::kReadBufSize, 0);
@@ -163,12 +154,10 @@ kigoron::http_connection_t::SendResponse (
 	std::shared_ptr<net::HttpResponse> response
 	)
 {
-	const std::string response_string = response->ToResponseString();
-	if (buflen_ > 0) free (buf_);
-	buflen_ = response_string.size();
-	buf_ = (char*)malloc (buflen_);
-	memcpy (buf_, response_string.c_str(), buflen_);
-	bufoff_ = 0;
+	const auto response_string = response->ToResponseString();
+	net::IOBuffer* raw_send_buf = new net::StringIOBuffer (response_string);
+	net::DrainableIOBuffer* send_buf = new net::DrainableIOBuffer (raw_send_buf, response_string.size());
+	write_buf_.reset (send_buf);
 	state_ = HTTP_STATE_WRITE;
 }
 
@@ -178,7 +167,7 @@ bool
 kigoron::http_connection_t::Write()
 {
 	do {
-		const ssize_t bytes_written = send (sock_, buf_ + bufoff_, buflen_ - bufoff_, 0);
+		const ssize_t bytes_written = send (sock_, write_buf_->data(), write_buf_->BytesRemaining(), 0);
 		if (bytes_written < 0) {
 			const int save_errno = WSAGetLastError();
 			if (WSAEINTR == save_errno || WSAEWOULDBLOCK == save_errno)
@@ -196,9 +185,10 @@ kigoron::http_connection_t::Write()
 				", \"text\": \"" << errbuf << "\""
 				" }";
 			return false;
+		} else {
+			write_buf_->DidConsume (bytes_written);
 		}
-		bufoff_ += bytes_written;
-	} while (bufoff_ < buflen_);
+	} while (write_buf_->BytesRemaining() > 0);
 
 	if (0 == shutdown (sock_, SHUT_WR)) {
 		return false;

@@ -14,6 +14,7 @@
 
 #include "net/http_request.hh"
 #include "net/http_response.hh"
+#include "net/io_buffer.hh"
 
 #ifdef _WIN32           
 #	define in_port_t	uint16_t
@@ -54,10 +55,8 @@ namespace kigoron
 		SOCKET sock_;
 		std::string name_;
 		HttpState state_;
-		char* buf_;
-		size_t buflen_;
-		size_t bufoff_;
 		net::HttpRequestParser request_parser_;
+		std::shared_ptr<net::DrainableIOBuffer> write_buf_;
 	};
 
 	class provider_t;

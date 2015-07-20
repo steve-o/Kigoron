@@ -69,6 +69,7 @@ namespace net {
 class IOBuffer {
  public:
   IOBuffer();
+  virtual ~IOBuffer();
   explicit IOBuffer(int buffer_size);
 
   char* data() { return data_; }
@@ -77,8 +78,6 @@ class IOBuffer {
   // Only allow derived classes to specify data_.
   // In all other cases, we own data_, and must delete it at destruction time.
   explicit IOBuffer(char* data);
-
-  virtual ~IOBuffer();
 
   char* data_;
 };
@@ -90,6 +89,7 @@ class IOBuffer {
 class IOBufferWithSize : public IOBuffer {
  public:
   explicit IOBufferWithSize(int size);
+  virtual ~IOBufferWithSize();
 
   int size() const { return size_; }
 
@@ -98,7 +98,6 @@ class IOBufferWithSize : public IOBuffer {
   // constructor IOBuffer(char*) thus allowing subclass to use underlying
   // memory it does not own.
   IOBufferWithSize(char* data, int size);
-  virtual ~IOBufferWithSize();
 
   int size_;
 };
@@ -108,12 +107,11 @@ class IOBufferWithSize : public IOBuffer {
 class StringIOBuffer : public IOBuffer {
  public:
   explicit StringIOBuffer(const std::string& s);
+  virtual ~StringIOBuffer();
 
   int size() const { return static_cast<int>(string_data_.size()); }
 
  private:
-  virtual ~StringIOBuffer();
-
   std::string string_data_;
 };
 
@@ -137,6 +135,7 @@ class StringIOBuffer : public IOBuffer {
 class DrainableIOBuffer : public IOBuffer {
  public:
   DrainableIOBuffer(IOBuffer* base, int size);
+  virtual ~DrainableIOBuffer();
 
   // DidConsume() changes the |data_| pointer so that |data_| always points
   // to the first unconsumed byte.
@@ -155,9 +154,8 @@ class DrainableIOBuffer : public IOBuffer {
   int size() const { return size_; }
 
  private:
-  virtual ~DrainableIOBuffer();
 
-  IOBuffer* base_;
+  std::shared_ptr<IOBuffer> base_;
   int size_;
   int used_;
 };
@@ -182,6 +180,7 @@ class DrainableIOBuffer : public IOBuffer {
 class GrowableIOBuffer : public IOBuffer {
  public:
   GrowableIOBuffer();
+  virtual ~GrowableIOBuffer();
 
   // realloc memory to the specified capacity.
   void SetCapacity(int capacity);
@@ -195,7 +194,6 @@ class GrowableIOBuffer : public IOBuffer {
   char* StartOfBuffer();
 
  private:
-  virtual ~GrowableIOBuffer();
 
   char* real_data_;
   int capacity_;
@@ -210,9 +208,9 @@ class GrowableIOBuffer : public IOBuffer {
 class WrappedIOBuffer : public IOBuffer {
  public:
   explicit WrappedIOBuffer(const char* data);
+  virtual ~WrappedIOBuffer();
 
  protected:
-  virtual ~WrappedIOBuffer();
 };
 
 }  // namespace net
