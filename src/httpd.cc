@@ -4,6 +4,8 @@
 #ifdef _WIN32
 #	include <winsock2.h>
 #	include <Ws2tcpip.h>
+#	include <Lmcons.h>
+#	include <process.h>
 #else
 #	include <sys/types.h>
 #	include <sys/socket.h>
@@ -12,10 +14,13 @@
 
 #include "httpd.hh"
 
+#include "chromium/basictypes.hh"
 #include "chromium/logging.hh"
 
 #ifdef _WIN32
 #	define SHUT_WR		SD_SEND
+#	define LOGIN_NAME_MAX	(UNLEN + 1)
+#	define getpid		_getpid
 #endif
 
 namespace net {
@@ -127,11 +132,89 @@ kigoron::http_connection_t::OnRequest (
 	std::shared_ptr<net::HttpRequest> request
 	)
 {
+	if (1 == request->relative_url.length()) {
+		return OnIndex (request);
+	}
+
 	LOG(WARNING) << "Request not handled. Returning 404: "
 			<< request->relative_url;
 	auto not_found_response = std::make_shared<net::BasicHttpResponse>();
 	not_found_response->set_code (net::HTTP_NOT_FOUND);
 	SendResponse (std::move (not_found_response));
+}
+
+void
+kigoron::http_connection_t::OnIndex (
+	std::shared_ptr<net::HttpRequest> request
+	)
+{
+	std::stringstream ss;
+	char http_hostname[NI_MAXHOST];
+	char http_username[LOGIN_NAME_MAX + 1];
+	int http_pid;
+	int rc;
+
+	auto index_response = std::make_shared<net::BasicHttpResponse>();
+
+/* hostname */
+	rc = gethostname (http_hostname, sizeof (http_hostname));
+	if (0 != rc) {
+		const int save_errno = WSAGetLastError();
+		char errbuf[1024];
+		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
+				NULL,            /* source */
+                       		save_errno,      /* message id */
+                       		MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),      /* language id */
+                       		(LPTSTR)errbuf,
+                       		sizeof (errbuf),
+                       		NULL);           /* arguments */
+		LOG(ERROR) << "gethostname: { "
+			  "\"errno\": " << save_errno << ""
+			", \"text\": \"" << errbuf << "\""
+			" }";
+// fallback value
+		strcpy (http_hostname, "");
+	} else {
+		http_hostname[NI_MAXHOST - 1] = '\0';
+	}
+
+/* username */
+	wchar_t wusername[UNLEN + 1];
+	DWORD nSize = arraysize( wusername );
+	if (!GetUserNameW (wusername, &nSize)) {
+		const DWORD save_errno = GetLastError();
+		char errbuf[1024];
+		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
+				NULL,            /* source */
+                       		save_errno,      /* message id */
+                       		MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),      /* language id */
+                       		(LPTSTR)errbuf,
+                       		sizeof (errbuf),
+                       		NULL);           /* arguments */
+		LOG(ERROR) << "GetUserNameW: { "
+			  "\"errno\": " << save_errno << ""
+			", \"text\": \"" << errbuf << "\""
+			" }";
+// fallback value
+		strcpy (http_username, "");
+	} else {
+		WideCharToMultiByte (CP_UTF8, 0, wusername, nSize + 1, http_username, sizeof (http_username), NULL, NULL);
+	}
+
+/* pid */
+	http_pid = getpid();
+
+	ss   << "<table>"
+		"<tr>"
+			"<th>host name:</th><td>" << http_hostname << "</td>"
+		"</tr><tr>"
+			"<th>user name:</th><td>" << http_username << "</td>"
+		"</tr><tr>"
+			"<th>process ID:</th><td>" << http_pid << "</td>"
+		"</tr>"
+		"</table>\n";
+	index_response->set_content (ss.str());
+	SendResponse (std::move (index_response));
 }
 
 /* returns true on success, false to abort connection.

@@ -52,6 +52,8 @@ namespace kigoron
 		void SendResponse (std::shared_ptr<net::HttpResponse> response);
 		bool Write();
 
+		void OnIndex (std::shared_ptr<net::HttpRequest> request);
+
 		SOCKET sock_;
 		std::string name_;
 		HttpState state_;
