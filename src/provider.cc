@@ -113,7 +113,7 @@ kigoron::provider_t::Initialize()
 
 /* Built in HTTPD server. */
 	httpd_.reset (new httpd_t());
-	if (!(bool)httpd_ || !httpd_->Initialize())
+	if (!(bool)httpd_ || !httpd_->Start (7580))
 		return false;
 
 	return true;

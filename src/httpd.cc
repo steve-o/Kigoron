@@ -302,9 +302,11 @@ kigoron::httpd_t::~httpd_t()
 /* Open HTTP port and listen for incoming connection attempts.
  */
 bool
-kigoron::httpd_t::Initialize()
+kigoron::httpd_t::Start (
+	in_port_t port
+	)
 {
-	listen_sock_ = CreateAndListen ("::", 7580);
+	listen_sock_ = CreateAndListen ("::", port);
 	if (INVALID_SOCKET == listen_sock_)
 		return false;
 

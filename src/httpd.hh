@@ -74,7 +74,7 @@ namespace kigoron
 		explicit httpd_t();
 		~httpd_t();
 
-		bool Initialize();
+		bool Start (in_port_t port);
 		void Close();
 
 		std::shared_ptr<http_connection_t> Accept();
