@@ -16,6 +16,8 @@
 
 #include "chromium/basictypes.hh"
 #include "chromium/logging.hh"
+#include "net/base/ip_endpoint.hh"
+#include "net/base/net_util.hh"
 
 #ifdef _WIN32
 #	define SHUT_WR		SD_SEND
@@ -302,15 +304,27 @@ kigoron::httpd_t::~httpd_t()
 bool
 kigoron::httpd_t::Initialize()
 {
-	char hostname[NI_MAXHOST];
-	int rc;
-
 	listen_sock_ = CreateAndListen ("::", 7580);
 	if (INVALID_SOCKET == listen_sock_)
 		return false;
-/* Resolve hostname for display */
-	rc = gethostname (hostname, sizeof (hostname));
-	if (0 != rc) {
+
+	net::IPEndPoint address;
+	if (0 != GetLocalAddress (&address)) {
+		NOTREACHED() << "Cannot start HTTP server";
+		return false;
+	}
+
+	LOG(INFO) << "Address of HTTP server: " << address.ToString();
+	return true;
+}
+
+int
+kigoron::httpd_t::GetLocalAddress (
+	net::IPEndPoint* address
+	)
+{
+	net::SockaddrStorage storage;
+	if (getsockname (listen_sock_, storage.addr, &storage.addr_len)) {
 		const int save_errno = WSAGetLastError();
 		char errbuf[1024];
 		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
@@ -320,15 +334,16 @@ kigoron::httpd_t::Initialize()
                        		(LPTSTR)errbuf,
                        		sizeof (errbuf),
                        		NULL);           /* arguments */
-		LOG(ERROR) << "gethostname: { "
+		LOG(ERROR) << "getsockname: { "
 			  "\"errno\": " << save_errno << ""
 			", \"text\": \"" << errbuf << "\""
 			" }";
-		return false;
+		return -1;
 	}
-	hostname[NI_MAXHOST - 1] = '\0';
-	LOG(INFO) << "Web interface http://" << hostname << ":" << 7580 << "/";
-	return true;
+	if (!address->FromSockAddr (storage.addr, storage.addr_len))
+		return -1;
+
+	return 0;
 }
 
 SOCKET

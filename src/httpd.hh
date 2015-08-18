@@ -21,6 +21,11 @@
 #	define ssize_t		SSIZE_T
 #endif
 
+namespace net
+{
+class IPEndPoint;
+}
+
 namespace kigoron
 {
 	enum HttpState { HTTP_STATE_READ,
@@ -80,6 +85,7 @@ namespace kigoron
 
 	private:
 		SOCKET CreateAndListen (const std::string& ip, in_port_t port);
+		int GetLocalAddress (net::IPEndPoint* address);
 
 		SOCKET listen_sock_;
 		std::list<std::shared_ptr<http_connection_t>> connections_;

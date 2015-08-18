@@ -147,10 +147,14 @@ set(cxx-sources
 	src/chromium/synchronization/lock_impl_win.cc
 	src/chromium/vlog.cc
 	src/googleurl/url_parse.cc
+	src/net/base/ip_endpoint.cc
+	src/net/base/net_util.cc
 	src/net/http_request.cc
 	src/net/http_response.cc
 	src/net/http_status_code.cc
 	src/net/io_buffer.cc
+	src/url/url_canon_ip.cc
+	src/url/url_canon_stdstring.cc
 )
 
 include_directories(
