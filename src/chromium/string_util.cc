@@ -96,6 +96,39 @@ void ReplaceFirstSubstringAfterOffset(std::string* str,
                                  false);  // replace first instance
 }
 
+template<typename STR>
+static size_t TokenizeT(const STR& str,
+                        const STR& delimiters,
+                        std::vector<STR>* tokens) {
+  tokens->clear();
+
+  size_t start = str.find_first_not_of(delimiters);
+  while (start != STR::npos) {
+    size_t end = str.find_first_of(delimiters, start + 1);
+    if (end == STR::npos) {
+      tokens->push_back(str.substr(start));
+      break;
+    } else {
+      tokens->push_back(str.substr(start, end - start));
+      start = str.find_first_not_of(delimiters, end + 1);
+    }
+  }
+
+  return tokens->size();
+}
+
+size_t Tokenize(const std::string& str,
+                const std::string& delimiters,
+                std::vector<std::string>* tokens) {
+  return TokenizeT(str, delimiters, tokens);
+}
+
+size_t Tokenize(const chromium::StringPiece& str,
+                const chromium::StringPiece& delimiters,
+                std::vector<chromium::StringPiece>* tokens) {
+  return TokenizeT(str, delimiters, tokens);
+}
+
 // The following code is compatible with the OpenBSD lcpy interface.  See:
 //   http://www.gratisoft.us/todd/papers/strlcpy.html
 //   ftp://ftp.openbsd.org/pub/OpenBSD/src/lib/libc/string/{wcs,str}lcpy.c

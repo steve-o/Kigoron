@@ -149,6 +149,7 @@ set(cxx-sources
 	src/googleurl/url_parse.cc
 	src/net/base/ip_endpoint.cc
 	src/net/base/net_util.cc
+	src/net/server/http_server_request_info.cc
 	src/net/http_request.cc
 	src/net/http_response.cc
 	src/net/http_status_code.cc

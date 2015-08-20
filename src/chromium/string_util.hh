@@ -10,6 +10,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "string_piece.hh"  // For implicit conversions.
 
@@ -137,6 +138,18 @@ void ReplaceFirstSubstringAfterOffset(
     std::string::size_type start_offset,
     const std::string& find_this,
     const std::string& replace_with);
+
+//-----------------------------------------------------------------------------
+
+// Splits a string into its fields delimited by any of the characters in
+// |delimiters|.  Each field is added to the |tokens| vector.  Returns the
+// number of tokens found.
+size_t Tokenize(const std::string& str,
+                const std::string& delimiters,
+                std::vector<std::string>* tokens);
+size_t Tokenize(const chromium::StringPiece& str,
+                const chromium::StringPiece& delimiters,
+                std::vector<chromium::StringPiece>* tokens);
 
 // Hack to convert any char-like type to its unsigned counterpart.
 // For example, it will convert char, signed char and unsigned char to unsigned
