@@ -152,7 +152,7 @@ set(cxx-sources
 	src/net/server/http_server_request_info.cc
 	src/net/http_request.cc
 	src/net/http_response.cc
-	src/net/http_status_code.cc
+	src/net/http/http_status_code.cc
 	src/net/io_buffer.cc
 	src/url/url_canon_ip.cc
 	src/url/url_canon_stdstring.cc

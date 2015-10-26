@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef NET_HTTP_STATUS_CODE_H_
-#define NET_HTTP_STATUS_CODE_H_
+#ifndef NET_HTTP_HTTP_STATUS_CODE_HH_
+#define NET_HTTP_HTTP_STATUS_CODE_HH_
 
 namespace net {
 
@@ -11,7 +11,7 @@ namespace net {
 enum HttpStatusCode {
 
 #define HTTP_STATUS(label, code, reason) HTTP_ ## label = code,
-#include "net/http_status_code_list.hh"
+#include "net/http/http_status_code_list.hh"
 #undef HTTP_STATUS
 
 };
@@ -28,4 +28,4 @@ const char* GetHttpReasonPhrase(HttpStatusCode code);
 
 }  // namespace net
 
-#endif  // NET_HTTP_STATUS_CODE_H_
+#endif  // NET_HTTP_HTTP_STATUS_CODE_HH_

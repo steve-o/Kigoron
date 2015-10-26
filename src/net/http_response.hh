@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "net/http_status_code.hh"
+#include "net/http/http_status_code.hh"
 
 namespace net {
 
