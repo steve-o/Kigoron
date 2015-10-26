@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef CHROMIUM_STRINGPRINTF_H_
-#define CHROMIUM_STRINGPRINTF_H_
+#ifndef CHROMIUM_STRINGS_STRINGPRINTF_HH_
+#define CHROMIUM_STRINGS_STRINGPRINTF_HH_
 
 #include <stdarg.h>   // va_list
 
@@ -29,4 +29,4 @@ void StringAppendV(std::string* dst, const char* format, va_list ap);
 
 }  // namespace base
 
-#endif  // CHROMIUM_STRINGPRINTF_H_
+#endif  // CHROMIUM_STRINGS_STRINGPRINTF_HH_

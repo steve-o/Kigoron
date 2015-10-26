@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef CHROMIUM_STRING_NUMBER_CONVERSIONS_HH_
-#define CHROMIUM_STRING_NUMBER_CONVERSIONS_HH_
+#ifndef CHROMIUM_STRINGS_STRING_NUMBER_CONVERSIONS_HH_
+#define CHROMIUM_STRINGS_STRING_NUMBER_CONVERSIONS_HH_
 
 #include <string>
 #include <vector>
 
-#include "basictypes.hh"
+#include "../basictypes.hh"
 #include "string_piece.hh"
 
 // ----------------------------------------------------------------------------
@@ -92,5 +92,5 @@ bool HexStringToBytes(const std::string& input, std::vector<uint8_t>* output);
 
 }  // namespace chromium
 
-#endif  // CHROMIUM_STRING_NUMBER_CONVERSIONS_HH_
+#endif  // CHROMIUM_STRINGS_STRING_NUMBER_CONVERSIONS_HH_
 

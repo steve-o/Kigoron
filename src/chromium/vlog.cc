@@ -5,7 +5,7 @@
 #include "vlog.hh"
 
 #include "logging.hh"
-#include "string_split.hh"
+#include "strings/string_split.hh"
 
 namespace logging {
 

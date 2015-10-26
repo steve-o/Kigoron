@@ -5,9 +5,8 @@
 // This file contains utility functions for dealing with the local
 // filesystem.
 
-#ifndef CHROMIUM_FILE_UTIL_HH__
-#define CHROMIUM_FILE_UTIL_HH__
-#pragma once
+#ifndef CHROMIUM_FILES_FILE_UTIL_HH__
+#define CHROMIUM_FILES_FILE_UTIL_HH__
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -51,4 +50,4 @@ bool CloseFile(FILE* file);
 
 }  // namespace file_util
 
-#endif  // CHROMIUM_FILE_UTIL_HH__
+#endif  // CHROMIUM_FILES_FILE_UTIL_HH__

@@ -7,7 +7,7 @@
 #include <vector>
 #include <errno.h>
 
-#include "logging.hh"
+#include "../logging.hh"
 #include "string_util.hh"
 
 namespace chromium {

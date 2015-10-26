@@ -32,7 +32,7 @@
 
 #include "../../chromium/basictypes.hh"
 #include "../../chromium/logging.hh"
-#include "../../chromium/stringprintf.hh"
+#include "../../chromium/strings/stringprintf.hh"
 #include "../../url/url_canon.hh"
 #include "../../url/url_canon_stdstring.hh"
 #include "../../url/url_canon_ip.hh"

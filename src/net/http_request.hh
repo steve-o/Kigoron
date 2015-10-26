@@ -9,7 +9,7 @@
 #include <memory>
 #include <string>
 
-#include "../chromium/string_piece.hh"
+#include "../chromium/strings/string_piece.hh"
 
 namespace net {
 

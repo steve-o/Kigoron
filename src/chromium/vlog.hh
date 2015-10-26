@@ -13,7 +13,7 @@
 /* Boost noncopyable base class */
 #include <boost/utility.hpp>
 
-#include "string_piece.hh"
+#include "strings/string_piece.hh"
 
 namespace logging {
 

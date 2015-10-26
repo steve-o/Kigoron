@@ -17,7 +17,7 @@
 #include <memory>
 #include <boost/unordered_map.hpp>
 
-#include "chromium/string_piece.hh"
+#include "chromium/strings/string_piece.hh"
 #include "client.hh"
 #include "provider.hh"
 #include "config.hh"

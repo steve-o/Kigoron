@@ -12,7 +12,7 @@
 
 #ifdef ENABLE_LEAK_TRACKER
 #include "stack_trace.hh"
-#include "../linked_list.hh"
+#include "../containers/linked_list.hh"
 #include "../logging.hh"
 #endif  // ENABLE_LEAK_TRACKER
 

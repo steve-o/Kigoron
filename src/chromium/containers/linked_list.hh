@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef CHROMIUM_LINKED_LIST_H__
-#define CHROMIUM_LINKED_LIST_H__
+#ifndef CHROMIUM_CONTAINERS_LINKED_LIST_HH__
+#define CHROMIUM_CONTAINERS_LINKED_LIST_HH__
 
 // Simple LinkedList type. (See the Q&A section to understand how this
 // differs from std::list).
@@ -168,4 +168,4 @@ class LinkedList {
 
 }  // namespace chromium
 
-#endif  // CHROMIUM_LINKED_LIST_H__
+#endif  // CHROMIUM_CONTAINERS_LINKED_LIST_HH__

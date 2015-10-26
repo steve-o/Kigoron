@@ -5,7 +5,7 @@
 #include "http_server_request_info.hh"
 
 #include "../../chromium/logging.hh"
-#include "../../chromium/string_util.hh"
+#include "../../chromium/strings/string_util.hh"
 
 namespace net {
 

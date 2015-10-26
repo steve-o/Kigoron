@@ -5,7 +5,7 @@
 #include "ip_endpoint.hh"
 
 #include "../../chromium/logging.hh"
-#include "../../chromium/string_number_conversions.hh"
+#include "../../chromium/strings/string_number_conversions.hh"
 #if defined(_WIN32)
 #include <winsock2.h>
 #elif defined(OS_POSIX)

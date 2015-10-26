@@ -7,9 +7,9 @@
 #include <algorithm>
 
 #include "../chromium/logging.hh"
-#include "../chromium/string_util.hh"
-#include "../chromium/string_number_conversions.hh"
-#include "../chromium/string_split.hh"
+#include "../chromium/strings/string_util.hh"
+#include "../chromium/strings/string_number_conversions.hh"
+#include "../chromium/strings/string_split.hh"
 
 namespace net {
 

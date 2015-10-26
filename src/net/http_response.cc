@@ -8,7 +8,7 @@
 
 #include "../chromium/format_macros.hh"
 #include "../chromium/logging.hh"
-#include "../chromium/stringprintf.hh"
+#include "../chromium/strings/stringprintf.hh"
 #include "http_status_code.hh"
 
 namespace net {

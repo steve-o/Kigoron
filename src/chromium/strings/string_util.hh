@@ -4,10 +4,8 @@
 //
 // This file defines utility functions for working with strings.
 
-#ifndef CHROMIUM_STRING_UTIL_HH__
-#define CHROMIUM_STRING_UTIL_HH__
-
-#pragma once
+#ifndef CHROMIUM_STRINGS_STRING_UTIL_HH__
+#define CHROMIUM_STRINGS_STRING_UTIL_HH__
 
 #include <string>
 #include <vector>
@@ -172,4 +170,4 @@ struct ToUnsigned<short> {
   typedef unsigned short Unsigned;
 };
 
-#endif  // CHROMIUM_STRING_UTIL_HH__
+#endif  // CHROMIUM_STRINGS_STRING_UTIL_HH__

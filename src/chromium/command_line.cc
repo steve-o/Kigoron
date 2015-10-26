@@ -8,8 +8,8 @@
 #include <ostream>
 
 #include "logging.hh"
-#include "string_split.hh"
-#include "string_util.hh"
+#include "strings/string_split.hh"
+#include "strings/string_util.hh"
 
 CommandLine* CommandLine::current_process_commandline_ = NULL;
 

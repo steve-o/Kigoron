@@ -2,9 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef CHROMIUM_FILE_H_
-#define CHROMIUM_FILE_H_
-#pragma once
+#ifndef CHROMIUM_FILES_FILE_HH_
+#define CHROMIUM_FILES_FILE_HH_
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -71,4 +70,4 @@ class File {
 
 }  // namespace chromium
 
-#endif  // CHROMIUM_FILE_H_
+#endif  // CHROMIUM_FILES_FILE_HH_

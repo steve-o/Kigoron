@@ -11,7 +11,7 @@
 #include <string>
 #include <limits>
 
-#include "logging.hh"
+#include "../logging.hh"
 //#include "base/third_party/dmg_fp/dmg_fp.h"
 //#include "base/utf_string_conversions.h"
 

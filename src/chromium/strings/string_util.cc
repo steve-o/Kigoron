@@ -4,7 +4,7 @@
 
 #include "string_util.hh"
 
-#include "logging.hh"
+#include "../logging.hh"
 
 const char kWhitespaceASCII[] = {
   0x09,    // <control-0009> to <control-000D>

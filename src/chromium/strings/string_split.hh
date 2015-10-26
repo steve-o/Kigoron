@@ -2,10 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef CHROMIUM_STRING_SPLIT_HH__
-#define CHROMIUM_STRING_SPLIT_HH__
-
-#pragma once
+#ifndef CHROMIUM_STRINGS_STRING_SPLIT_HH__
+#define CHROMIUM_STRINGS_STRING_SPLIT_HH__
 
 #include <string>
 #include <utility>
@@ -63,4 +61,4 @@ void SplitStringAlongWhitespace(const std::string& str,
 
 }  // namespace base
 
-#endif  // CHROMIUM_STRING_SPLIT_HH__
+#endif  // CHROMIUM_STRINGS_STRING_SPLIT_HH__

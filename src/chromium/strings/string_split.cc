@@ -4,7 +4,7 @@
 
 #include "string_split.hh"
 
-#include "logging.hh"
+#include "../logging.hh"
 #include "string_util.hh"
 
 namespace chromium {

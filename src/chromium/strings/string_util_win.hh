@@ -2,9 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef CHROMIUM_STRING_UTIL_WIN_HH__
-#define CHROMIUM_STRING_UTIL_WIN_HH__
-#pragma once
+#ifndef CHROMIUM_STRINGS_STRING_UTIL_WIN_HH__
+#define CHROMIUM_STRINGS_STRING_UTIL_WIN_HH__
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -22,4 +21,4 @@ inline int vsnprintf(char* buffer, size_t size,
 
 }  // namespace chromium
 
-#endif  // CHROMIUM_STRING_UTIL_WIN_HH__
+#endif  // CHROMIUM_STRINGS_STRING_UTIL_WIN_HH__

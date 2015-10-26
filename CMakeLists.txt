@@ -133,16 +133,16 @@ set(cxx-sources
 	src/chromium/command_line.cc
 	src/chromium/debug/stack_trace.cc
 	src/chromium/debug/stack_trace_win.cc
-	src/chromium/file.cc
-	src/chromium/file_util.cc
-	src/chromium/file_util_win.cc
+	src/chromium/files/file.cc
+	src/chromium/files/file_util.cc
+	src/chromium/files/file_util_win.cc
 	src/chromium/memory/singleton.cc
 	src/chromium/logging.cc
-	src/chromium/string_number_conversions.cc
-	src/chromium/string_piece.cc
-	src/chromium/string_split.cc
-	src/chromium/string_util.cc
-	src/chromium/stringprintf.cc
+	src/chromium/strings/string_number_conversions.cc
+	src/chromium/strings/string_piece.cc
+	src/chromium/strings/string_split.cc
+	src/chromium/strings/string_util.cc
+	src/chromium/strings/stringprintf.cc
 	src/chromium/synchronization/lock.cc
 	src/chromium/synchronization/lock_impl_win.cc
 	src/chromium/vlog.cc

@@ -20,9 +20,8 @@
 // functions (find, find_first_of, etc.) are found to be useful in this context.
 //
 
-#ifndef CHROMIUM_STRING_PIECE_HH__
-#define CHROMIUM_STRING_PIECE_HH__
-#pragma once
+#ifndef CHROMIUM_STRINGS_STRING_PIECE_HH__
+#define CHROMIUM_STRINGS_STRING_PIECE_HH__
 
 #include <iosfwd>
 #include <string>
@@ -403,4 +402,4 @@ inline size_t hash_value(const chromium::StringPiece& sp) {
 
 }  // namespace BASE_HASH_NAMESPACE
 
-#endif  // CHROMIUM_STRING_PIECE_HH__
+#endif  // CHROMIUM_STRINGS_STRING_PIECE_HH__
