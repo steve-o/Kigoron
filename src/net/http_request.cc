@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "http_request.hh"
+#include "net/http_request.hh"
 
 #include <algorithm>
 
-#include "../chromium/logging.hh"
-#include "../chromium/strings/string_util.hh"
-#include "../chromium/strings/string_number_conversions.hh"
-#include "../chromium/strings/string_split.hh"
+#include "chromium/logging.hh"
+#include "chromium/strings/string_util.hh"
+#include "chromium/strings/string_number_conversions.hh"
+#include "chromium/strings/string_split.hh"
 
 namespace net {
 

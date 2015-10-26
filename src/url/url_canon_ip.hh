@@ -5,7 +5,7 @@
 #ifndef URL_URL_CANON_IP_HH_
 #define URL_URL_CANON_IP_HH_
 
-#include "url_canon.hh"
+#include "url/url_canon.hh"
 
 namespace url {
 

@@ -11,7 +11,7 @@
 
 #include <string>
 
-#include "url_canon.hh"
+#include "url/url_canon.hh"
 
 namespace url {
 

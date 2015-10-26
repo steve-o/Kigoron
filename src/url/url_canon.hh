@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../googleurl/url_parse.h"
+#include "googleurl/url_parse.h"
 
 namespace url {
 

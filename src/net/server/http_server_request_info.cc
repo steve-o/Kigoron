@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "http_server_request_info.hh"
+#include "net/server/http_server_request_info.hh"
 
-#include "../../chromium/logging.hh"
-#include "../../chromium/strings/string_util.hh"
+#include "chromium/logging.hh"
+#include "chromium/strings/string_util.hh"
 
 namespace net {
 

@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "http_response.hh"
+#include "net/http_response.hh"
 
 #include <cinttypes>
 
-#include "../chromium/format_macros.hh"
-#include "../chromium/logging.hh"
-#include "../chromium/strings/stringprintf.hh"
-#include "http_status_code.hh"
+#include "chromium/format_macros.hh"
+#include "chromium/logging.hh"
+#include "chromium/strings/stringprintf.hh"
+#include "net/http_status_code.hh"
 
 namespace net {
 

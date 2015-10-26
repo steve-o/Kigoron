@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "ip_endpoint.hh"
+#include "net/base/ip_endpoint.hh"
 
-#include "../../chromium/logging.hh"
-#include "../../chromium/strings/string_number_conversions.hh"
+#include "chromium/logging.hh"
+#include "chromium/strings/string_number_conversions.hh"
 #if defined(_WIN32)
 #include <winsock2.h>
 #elif defined(OS_POSIX)

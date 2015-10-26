@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "url_canon_ip.hh"
+#include "url/url_canon_ip.hh"
 
 #include <stdlib.h>
 
-#include "../chromium/basictypes.hh"
-#include "../chromium/logging.hh"
-#include "../googleurl/url_parse.h"
+#include "chromium/basictypes.hh"
+#include "chromium/logging.hh"
+#include "googleurl/url_parse.h"
 
 namespace url {
 

@@ -8,7 +8,7 @@
 #include <map>
 #include <string>
 
-#include "..//base/ip_endpoint.hh"
+#include "net/base/ip_endpoint.hh"
 
 namespace net {
 

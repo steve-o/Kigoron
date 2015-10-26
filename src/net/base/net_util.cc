@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "net_util.hh"
+#include "net/base/net_util.hh"
 
 #include <errno.h>
 #include <string.h>
@@ -30,12 +30,12 @@
 #endif  // !defined(OS_ANDROID)
 #endif  // defined(OS_POSIX)
 
-#include "../../chromium/basictypes.hh"
-#include "../../chromium/logging.hh"
-#include "../../chromium/strings/stringprintf.hh"
-#include "../../url/url_canon.hh"
-#include "../../url/url_canon_stdstring.hh"
-#include "../../url/url_canon_ip.hh"
+#include "chromium/basictypes.hh"
+#include "chromium/logging.hh"
+#include "chromium/strings/stringprintf.hh"
+#include "url/url_canon.hh"
+#include "url/url_canon_stdstring.hh"
+#include "url/url_canon_ip.hh"
 
 namespace net {
 

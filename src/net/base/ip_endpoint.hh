@@ -7,9 +7,9 @@
 
 #include <string>
 
-#include "../../chromium/basictypes.hh"
-#include "address_family.hh"
-#include "net_util.hh"
+#include "chromium/basictypes.hh"
+#include "net/base/address_family.hh"
+#include "net/base/net_util.hh"
 
 struct sockaddr;
 

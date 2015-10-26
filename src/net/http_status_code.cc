@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "http_status_code.hh"
+#include "net/http_status_code.hh"
 
-#include "../chromium/logging.hh"
+#include "chromium/logging.hh"
 
 namespace net {
 

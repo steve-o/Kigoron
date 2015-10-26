@@ -17,8 +17,8 @@
 #include <string>
 #include <vector>
 
-#include "../../chromium/basictypes.hh"
-#include "address_family.hh"
+#include "chromium/basictypes.hh"
+#include "net/base/address_family.hh"
 
 namespace net {
 

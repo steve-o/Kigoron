@@ -11,7 +11,7 @@ namespace net {
 enum HttpStatusCode {
 
 #define HTTP_STATUS(label, code, reason) HTTP_ ## label = code,
-#include "http_status_code_list.hh"
+#include "net/http_status_code_list.hh"
 #undef HTTP_STATUS
 
 };
