@@ -4,7 +4,6 @@
 
 #ifndef CHROMIUM_PORT_HH_
 #define CHROMIUM_PORT_HH_
-#pragma once
 
 #include <stdarg.h>
 

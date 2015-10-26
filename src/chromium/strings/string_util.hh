@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "string_piece.hh"  // For implicit conversions.
+#include "chromium/strings/string_piece.hh"  // For implicit conversions.
 
 namespace chromium {
 
@@ -30,9 +30,9 @@ size_t strlcpy(char* dst, const char* src, size_t dst_size);
 }  // namespace chromium
 
 #if defined(_WIN32)
-#include "string_util_win.hh"
+#include "chromium/strings/string_util_win.hh"
 #else
-#include "string_util_posix.hh"
+#include "chromium/strings/string_util_posix.hh"
 #endif
 
 // Safe standard library wrappers for all platforms.

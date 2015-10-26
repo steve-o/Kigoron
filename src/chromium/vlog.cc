@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "vlog.hh"
+#include "chromium/vlog.hh"
 
-#include "logging.hh"
-#include "strings/string_split.hh"
+#include "chromium/logging.hh"
+#include "chromium/strings/string_split.hh"
 
 namespace logging {
 

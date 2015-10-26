@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "singleton.hh"
+#include "chromium/memory/singleton.hh"
 
 #include <boost/thread/thread.hpp>
 

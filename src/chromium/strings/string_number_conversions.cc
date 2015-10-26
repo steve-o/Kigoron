@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "string_number_conversions.hh"
+#include "chromium/strings/string_number_conversions.hh"
 
 #include <ctype.h>
 #include <errno.h>
@@ -11,9 +11,7 @@
 #include <string>
 #include <limits>
 
-#include "../logging.hh"
-//#include "base/third_party/dmg_fp/dmg_fp.h"
-//#include "base/utf_string_conversions.h"
+#include "chromium/logging.hh"
 
 namespace chromium {
 

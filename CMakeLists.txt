@@ -160,6 +160,7 @@ set(cxx-sources
 
 include_directories(
 	include
+	src
 	${CMAKE_CURRENT_BINARY_DIR}
 	${UPA_INCLUDE_DIRS}
 	${Boost_INCLUDE_DIRS}

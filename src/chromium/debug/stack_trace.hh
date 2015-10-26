@@ -5,7 +5,6 @@
 
 #ifndef CHROMIUM_DEBUG_STACK_TRACE_HH__
 #define CHROMIUM_DEBUG_STACK_TRACE_HH__
-#pragma once
 
 #include <iosfwd>
 #include <string>

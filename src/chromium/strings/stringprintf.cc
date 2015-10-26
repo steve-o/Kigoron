@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "stringprintf.hh"
+#include "chromium/strings/stringprintf.hh"
 
 #include <vector>
 #include <errno.h>
 
-#include "../logging.hh"
-#include "string_util.hh"
+#include "chromium/logging.hh"
+#include "chromium/strings/string_util.hh"
 
 namespace chromium {
 

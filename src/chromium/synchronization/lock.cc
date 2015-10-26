@@ -8,8 +8,8 @@
 
 #if !defined(NDEBUG)
 
-#include "lock.hh"
-#include "../logging.hh"
+#include "chromium/synchronization/lock.hh"
+#include "chromium/logging.hh"
 
 namespace chromium {
 

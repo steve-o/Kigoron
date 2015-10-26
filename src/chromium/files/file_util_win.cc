@@ -2,12 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "file_util.hh"
+#include "chromium/files/file_util.hh"
 
 #include <share.h>
 #include <windows.h>
-
-#include "time.h"
+#include <time.h>
 
 namespace chromium {
 

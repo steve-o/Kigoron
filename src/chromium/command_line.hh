@@ -15,8 +15,6 @@
 #ifndef CHROMIUM_COMMAND_LINE_HH__
 #define CHROMIUM_COMMAND_LINE_HH__
 
-#pragma once
-
 #include <stddef.h>
 #include <map>
 #include <string>

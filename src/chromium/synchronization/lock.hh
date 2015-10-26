@@ -4,12 +4,8 @@
 
 #ifndef CHROMIUM_SYNCHRONIZATION_LOCK_HH_
 #define CHROMIUM_SYNCHRONIZATION_LOCK_HH_
-#pragma once
 
-#include "lock_impl.hh"
-
-/* Boost noncopyable base class */
-#include <boost/utility.hpp>
+#include "chromium/synchronization/lock_impl.hh"
 
 #include <boost/thread/thread.hpp>
 
@@ -18,10 +14,10 @@ namespace chromium {
 // A convenient wrapper for an OS specific critical section.  The only real
 // intelligence in this class is in debug mode for the support for the
 // AssertAcquired() method.
-class Lock : boost::noncopyable {
+class Lock {
  public:
 #if defined(NDEBUG)             // Optimized wrapper implementation
-  Lock() : lock_() {}
+  explicit Lock() : lock_() {}
   ~Lock() {}
   void Acquire() { lock_.Lock(); }
   void Release() { lock_.Unlock(); }
@@ -35,7 +31,7 @@ class Lock : boost::noncopyable {
   // Null implementation if not debug.
   void AssertAcquired() const {}
 #else
-  Lock();
+  explicit Lock();
   ~Lock() {}
 
   // NOTE: Although windows critical sections support recursive locks, we do not
@@ -89,7 +85,7 @@ class Lock : boost::noncopyable {
 };
 
 // A helper class that acquires the given Lock while the AutoLock is in scope.
-class AutoLock : boost::noncopyable {
+class AutoLock {
  public:
   explicit AutoLock(Lock& lock) : lock_(lock) {
     lock_.Acquire();
@@ -106,7 +102,7 @@ class AutoLock : boost::noncopyable {
 
 // AutoUnlock is a helper that will Release() the |lock| argument in the
 // constructor, and re-Acquire() it in the destructor.
-class AutoUnlock : boost::noncopyable {
+class AutoUnlock {
  public:
   explicit AutoUnlock(Lock& lock) : lock_(lock) {
     // We require our caller to have the lock.

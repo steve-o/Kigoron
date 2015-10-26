@@ -4,12 +4,8 @@
 
 #ifndef CHROMIUM_LOCK_IMPL_HH__
 #define CHROMIUM_LOCK_IMPL_HH__
-#pragma once
 
 #include <winsock2.h>
-
-/* Boost noncopyable base class */
-#include <boost/utility.hpp>
 
 namespace chromium {
 namespace internal {
@@ -17,13 +13,12 @@ namespace internal {
 // This class implements the underlying platform-specific spin-lock mechanism
 // used for the Lock class.  Most users should not use LockImpl directly, but
 // should instead use Lock.
-class LockImpl :
-	boost::noncopyable
+class LockImpl
 {
 public:
 	typedef CRITICAL_SECTION OSLockType;
 
-	LockImpl();
+	explicit LockImpl();
 	~LockImpl();
 
 // If the lock is not held, take it and return true.  If the lock is already

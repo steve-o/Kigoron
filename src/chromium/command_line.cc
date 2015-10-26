@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "command_line.hh"
+#include "chromium/command_line.hh"
 
 #include <algorithm>
 #include <ostream>
 
-#include "logging.hh"
-#include "strings/string_split.hh"
-#include "strings/string_util.hh"
+#include "chromium/logging.hh"
+#include "chromium/strings/string_split.hh"
+#include "chromium/strings/string_util.hh"
 
 CommandLine* CommandLine::current_process_commandline_ = NULL;
 

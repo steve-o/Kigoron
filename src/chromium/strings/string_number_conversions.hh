@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 
-#include "../basictypes.hh"
-#include "string_piece.hh"
+#include "chromium/basictypes.hh"
+#include "chromium/strings/string_piece.hh"
 
 // ----------------------------------------------------------------------------
 // IMPORTANT MESSAGE FROM YOUR SPONSOR

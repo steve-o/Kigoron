@@ -6,7 +6,6 @@
 
 #ifndef CHROMIUM_ATOMICOPS_INTERNALS_X86_MSVC_HH__
 #define CHROMIUM_ATOMICOPS_INTERNALS_X86_MSVC_HH__
-#pragma once
 
 #include <windows.h>
 

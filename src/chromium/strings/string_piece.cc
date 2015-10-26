@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <ostream>
 
-#include "string_piece.hh"
+#include "chromium/strings/string_piece.hh"
 
 namespace chromium {
 

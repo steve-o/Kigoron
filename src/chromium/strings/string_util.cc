@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "string_util.hh"
+#include "chromium/strings/string_util.hh"
 
-#include "../logging.hh"
+#include "chromium/logging.hh"
 
 const char kWhitespaceASCII[] = {
   0x09,    // <control-0009> to <control-000D>

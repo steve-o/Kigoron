@@ -4,13 +4,12 @@
 
 #ifndef CHROMIUM_BASICTYPES_HH_
 #define CHROMIUM_BASICTYPES_HH_
-#pragma once
 
 #include <limits.h>         // So we can set the bounds of our types
 #include <stddef.h>         // For size_t
 #include <string.h>         // for memcpy
 
-#include "port.hh"    // Types that only need exist on certain systems
+#include "chromium/port.hh"    // Types that only need exist on certain systems
 
 #include <cstdint>         // For intptr_t.
 
