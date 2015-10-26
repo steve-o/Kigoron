@@ -12,7 +12,7 @@
 #endif
 #include <cstdint>
 
-#include "httpd.hh"
+#include "kigoron_http_server.hh"
 
 #include "chromium/basictypes.hh"
 #include "chromium/logging.hh"

@@ -123,7 +123,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /d2Zi+")
 set(cxx-sources
 	src/client.cc
 	src/config.cc
-	src/httpd.cc
+	src/kigoron_http_server.cc
 	src/main.cc
 	src/kigoron.cc
 	src/provider.cc

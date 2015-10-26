@@ -30,7 +30,7 @@
 #include "client.hh"
 #include "config.hh"
 #include "deleter.hh"
-#include "httpd.hh"
+#include "kigoron_http_server.hh"
 
 namespace kigoron
 {
