@@ -153,6 +153,77 @@ size_t lcpyT(CHAR* dst, const CHAR* src, size_t dst_size) {
 
 }  // namespace
 
+namespace chromium {
+
+}  // namespace chromium
+
+template<typename Iter>
+static inline bool DoLowerCaseEqualsASCII(Iter a_begin,
+                                          Iter a_end,
+                                          const char* b) {
+  for (Iter it = a_begin; it != a_end; ++it, ++b) {
+    if (!*b || chromium::ToLowerASCII(*it) != *b)
+      return false;
+  }
+  return *b == 0;
+}
+
+// Front-ends for LowerCaseEqualsASCII.
+bool LowerCaseEqualsASCII(const std::string& a, const char* b) {
+  return DoLowerCaseEqualsASCII(a.begin(), a.end(), b);
+}
+
+bool LowerCaseEqualsASCII(std::string::const_iterator a_begin,
+                          std::string::const_iterator a_end,
+                          const char* b) {
+  return DoLowerCaseEqualsASCII(a_begin, a_end, b);
+}
+
+bool LowerCaseEqualsASCII(const char* a_begin,
+                          const char* a_end,
+                          const char* b) {
+  return DoLowerCaseEqualsASCII(a_begin, a_end, b);
+}
+
+bool StartsWithASCII(const std::string& str,
+                     const std::string& search,
+                     bool case_sensitive) {
+  if (case_sensitive)
+    return str.compare(0, search.length(), search) == 0;
+  else
+    return chromium::strncasecmp(str.c_str(), search.c_str(), search.length()) == 0;
+}
+
+template <typename STR>
+bool StartsWithT(const STR& str, const STR& search, bool case_sensitive) {
+  if (case_sensitive) {
+    return str.compare(0, search.length(), search) == 0;
+  } else {
+    if (search.size() > str.size())
+      return false;
+    return std::equal(search.begin(), search.end(), str.begin(),
+                      chromium::CaseInsensitiveCompare<typename STR::value_type>());
+  }
+}
+
+template <typename STR>
+bool EndsWithT(const STR& str, const STR& search, bool case_sensitive) {
+  size_t str_length = str.length();
+  size_t search_length = search.length();
+  if (search_length > str_length)
+    return false;
+  if (case_sensitive)
+    return str.compare(str_length - search_length, search_length, search) == 0;
+  return std::equal(search.begin(), search.end(),
+                    str.begin() + (str_length - search_length),
+                    chromium::CaseInsensitiveCompare<typename STR::value_type>());
+}
+
+bool EndsWith(const std::string& str, const std::string& search,
+              bool case_sensitive) {
+  return EndsWithT(str, search, case_sensitive);
+}
+
 size_t chromium::strlcpy(char* dst, const char* src, size_t dst_size) {
   return lcpyT<char>(dst, src, dst_size);
 }

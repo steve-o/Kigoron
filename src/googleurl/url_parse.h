@@ -1,38 +1,15 @@
-// Copyright 2007, Google Inc.
-// All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-//     * Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//     * Redistributions in binary form must reproduce the above
-// copyright notice, this list of conditions and the following disclaimer
-// in the documentation and/or other materials provided with the
-// distribution.
-//     * Neither the name of Google Inc. nor the names of its
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// Copyright 2013 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
 
-#ifndef GOOGLEURL_URL_PARSE_H__
-#define GOOGLEURL_URL_PARSE_H__
+#ifndef URL_THIRD_PARTY_MOZILLA_URL_PARSE_H_
+#define URL_THIRD_PARTY_MOZILLA_URL_PARSE_H_
 
 #include <string>
 
-namespace url_parse {
+#include "chromium/basictypes.hh"
+
+namespace url {
 
 // Component ------------------------------------------------------------------
 
@@ -86,17 +63,17 @@ inline Component MakeRange(int begin, int end) {
 //
 // Typical usage would be:
 //
-//    url_parse::Parsed parsed;
-//    url_parse::Component scheme;
-//    if (!url_parse::ExtractScheme(url, url_len, &scheme))
+//    Parsed parsed;
+//    Component scheme;
+//    if (!ExtractScheme(url, url_len, &scheme))
 //      return I_CAN_NOT_FIND_THE_SCHEME_DUDE;
 //
 //    if (IsStandardScheme(url, scheme))  // Not provided by this component
-//      url_parseParseStandardURL(url, url_len, &parsed);
+//      ParseStandardURL(url, url_len, &parsed);
 //    else if (IsFileURL(url, scheme))    // Not provided by this component
-//      url_parse::ParseFileURL(url, url_len, &parsed);
+//      ParseFileURL(url, url_len, &parsed);
 //    else
-//      url_parse::ParsePathURL(url, url_len, &parsed);
+//      ParsePathURL(url, url_len, &parsed);
 //
 struct Parsed {
   // Identifies different components.
@@ -152,8 +129,7 @@ struct Parsed {
   //      *QUERY: 14                   15 <-
   //        *REF: 20                   20
   //
-  int CountCharactersBefore(ComponentType type,
-                                     bool include_delimiter) const;
+  int CountCharactersBefore(ComponentType type, bool include_delimiter) const;
 
   // Scheme without the colon: "http://foo"/ would have a scheme of "http".
   // The length will be -1 if no scheme is specified ("foo.com"), or 0 if there
@@ -177,10 +153,11 @@ struct Parsed {
   // Port number.
   Component port;
 
-  // Path, this is everything following the host name. Length will be -1 if
-  // unspecified. This includes the preceeding slash, so the path on
-  // http://www.google.com/asdf" is "/asdf". As a result, it is impossible to
-  // have a 0 length path, it will be -1 in cases like "http://host?foo".
+  // Path, this is everything following the host name, stopping at the query of
+  // ref delimiter (if any). Length will be -1 if unspecified. This includes
+  // the preceeding slash, so the path on http://www.google.com/asdf" is
+  // "/asdf". As a result, it is impossible to have a 0 length path, it will
+  // be -1 in cases like "http://host?foo".
   // Note that we treat backslashes the same as slashes.
   Component path;
 
@@ -194,6 +171,12 @@ struct Parsed {
   // Length will be -1 if there is no hash sign, or 0 if there is one but
   // nothing follows it.
   Component ref;
+
+  // The URL spec from the character after the scheme: until the end of the
+  // URL, regardless of the scheme. This is mostly useful for 'opaque' non-
+  // hierarchical schemes like data: and javascript: as a convient way to get
+  // the string with the scheme stripped off.
+  Component GetContent() const;
 
   // This is used for nested URL types, currently only filesystem.  If you
   // parse a filesystem URL, the resulting Parsed will have a nested
@@ -238,17 +221,27 @@ struct Parsed {
 // StandardURL is for when the scheme is known to be one that has an
 // authority (host) like "http". This function will not handle weird ones
 // like "about:" and "javascript:", or do the right thing for "file:" URLs.
-void ParseStandardURL(const char* url, int url_len, Parsed* parsed);
+void ParseStandardURL(const char* url,
+                                 int url_len,
+                                 Parsed* parsed);
 
 // PathURL is for when the scheme is known not to have an authority (host)
 // section but that aren't file URLs either. The scheme is parsed, and
 // everything after the scheme is considered as the path. This is used for
 // things like "about:" and "javascript:"
-void ParsePathURL(const char* url, int url_len, Parsed* parsed);
+void ParsePathURL(const char* url,
+                             int url_len,
+                             bool trim_path_end,
+                             Parsed* parsed);
 
 // FileURL is for file URLs. There are some special rules for interpreting
 // these.
 void ParseFileURL(const char* url, int url_len, Parsed* parsed);
+
+// Filesystem URLs are structured differently than other URLs.
+void ParseFileSystemURL(const char* url,
+                                   int url_len,
+                                   Parsed* parsed);
 
 // MailtoURL is for mailto: urls. They are made up scheme,path,query
 void ParseMailtoURL(const char* url, int url_len, Parsed* parsed);
@@ -275,20 +268,18 @@ void ParseMailtoURL(const char* url, int url_len, Parsed* parsed);
 // end of the string).
 //
 // The 8-bit version requires UTF-8 encoding.
-bool ExtractScheme(const char* url, int url_len, Component* scheme);
-
-// Returns true if ch is a character that terminates the authority segment
-// of a URL.
-bool IsAuthorityTerminator(char ch);
+bool ExtractScheme(const char* url,
+                              int url_len,
+                              Component* scheme);
 
 // Does a best effort parse of input |spec|, in range |auth|. If a particular
 // component is not found, it will be set to invalid.
 void ParseAuthority(const char* spec,
-                             const Component& auth,
-                             Component* username,
-                             Component* password,
-                             Component* hostname,
-                             Component* port_num);
+                               const Component& auth,
+                               Component* username,
+                               Component* password,
+                               Component* hostname,
+                               Component* port_num);
 
 // Computes the integer port value from the given port component. The port
 // component should have been identified by one of the init functions on
@@ -310,8 +301,8 @@ int ParsePort(const char* url, const Component& port);
 //
 // The 8-bit version requires UTF-8 encoding.
 void ExtractFileName(const char* url,
-                              const Component& path,
-                              Component* file_name);
+                                const Component& path,
+                                Component* file_name);
 
 // Extract the first key/value from the range defined by |*query|. Updates
 // |*query| to start at the end of the extracted key/value pair. This is
@@ -329,10 +320,10 @@ void ExtractFileName(const char* url,
 // If no key/value are found |*key| and |*value| will be unchanged and it will
 // return false.
 bool ExtractQueryKeyValue(const char* url,
-                                   Component* query,
-                                   Component* key,
-                                   Component* value);
+                                     Component* query,
+                                     Component* key,
+                                     Component* value);
 
-}  // namespace url_parse
+}  // namespace url
 
-#endif  // GOOGLEURL_URL_PARSE_H__
+#endif  // URL_THIRD_PARTY_MOZILLA_URL_PARSE_H_

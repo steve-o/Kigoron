@@ -45,6 +45,40 @@ class StdStringCanonOutput : public CanonOutput {
   std::string* str_;
 };
 
+// An extension of the Replacements class that allows the setters to use
+// standard strings.
+//
+// The strings passed as arguments are not copied and must remain valid until
+// this class goes out of scope.
+template<typename STR>
+class StdStringReplacements : public Replacements<typename STR::value_type> {
+ public:
+  void SetSchemeStr(const STR& s) {
+    this->SetScheme(s.data(), Component(0, static_cast<int>(s.length())));
+  }
+  void SetUsernameStr(const STR& s) {
+    this->SetUsername(s.data(), Component(0, static_cast<int>(s.length())));
+  }
+  void SetPasswordStr(const STR& s) {
+    this->SetPassword(s.data(), Component(0, static_cast<int>(s.length())));
+  }
+  void SetHostStr(const STR& s) {
+    this->SetHost(s.data(), Component(0, static_cast<int>(s.length())));
+  }
+  void SetPortStr(const STR& s) {
+    this->SetPort(s.data(), Component(0, static_cast<int>(s.length())));
+  }
+  void SetPathStr(const STR& s) {
+    this->SetPath(s.data(), Component(0, static_cast<int>(s.length())));
+  }
+  void SetQueryStr(const STR& s) {
+    this->SetQuery(s.data(), Component(0, static_cast<int>(s.length())));
+  }
+  void SetRefStr(const STR& s) {
+    this->SetRef(s.data(), Component(0, static_cast<int>(s.length())));
+  }
+};
+
 }  // namespace url
 
 #endif  // URL_URL_CANON_STDSTRING_HH_

@@ -1,40 +1,15 @@
-// Copyright 2007, Google Inc.
-// All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-//     * Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//     * Redistributions in binary form must reproduce the above
-// copyright notice, this list of conditions and the following disclaimer
-// in the documentation and/or other materials provided with the
-// distribution.
-//     * Neither the name of Google Inc. nor the names of its
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// Copyright 2013 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+#ifndef URL_URL_PARSE_INTERNAL_HH_
+#define URL_URL_PARSE_INTERNAL_HH_
 
 // Contains common inline helper functions used by the URL parsing routines.
 
-#ifndef GOOGLEURL_URL_PARSE_INTERNAL_H__
-#define GOOGLEURL_URL_PARSE_INTERNAL_H__
+#include "url/url_parse.hh"
 
-#include "url_parse.h"
-
-namespace url_parse {
+namespace url {
 
 // We treat slashes and backslashes the same for IE compatability.
 inline bool IsURLSlash(char ch) {
@@ -53,15 +28,19 @@ inline bool ShouldTrimFromURL(char ch) {
 // in the input string (so the string starts at character |*begin| in the spec,
 // and goes until |*len|).
 template<typename CHAR>
-inline void TrimURL(const CHAR* spec, int* begin, int* len) {
+inline void TrimURL(const CHAR* spec, int* begin, int* len,
+                    bool trim_path_end = true) {
   // Strip leading whitespace and control characters.
   while (*begin < *len && ShouldTrimFromURL(spec[*begin]))
     (*begin)++;
 
-  // Strip trailing whitespace and control characters. We need the >i test for
-  // when the input string is all blanks; we don't want to back past the input.
-  while (*len > *begin && ShouldTrimFromURL(spec[*len - 1]))
-    (*len)--;
+  if (trim_path_end) {
+    // Strip trailing whitespace and control characters. We need the >i test
+    // for when the input string is all blanks; we don't want to back past the
+    // input.
+    while (*len > *begin && ShouldTrimFromURL(spec[*len - 1]))
+      (*len)--;
+  }
 }
 
 // Counts the number of consecutive slashes starting at the given offset
@@ -89,7 +68,6 @@ void ParsePathInternal(const char* spec,
                        Component* query,
                        Component* ref);
 
-
 // Given a spec and a pointer to the character after the colon following the
 // scheme, this parses it and fills in the structure, Every item in the parsed
 // structure is filled EXCEPT for the scheme, which is untouched.
@@ -98,6 +76,6 @@ void ParseAfterScheme(const char* spec,
                       int after_scheme,
                       Parsed* parsed);
 
-}  // namespace url_parse
+}  // namespace url
 
-#endif  // GOOGLEURL_URL_PARSE_INTERNAL_H__
+#endif  // URL_URL_PARSE_INTERNAL_HH_

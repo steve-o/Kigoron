@@ -145,17 +145,30 @@ set(cxx-sources
 	src/chromium/strings/stringprintf.cc
 	src/chromium/synchronization/lock.cc
 	src/chromium/synchronization/lock_impl_win.cc
+	src/chromium/time/time.cc
+	src/chromium/time/time_win.cc
+	src/chromium/values.cc
 	src/chromium/vlog.cc
 	src/googleurl/url_parse.cc
 	src/net/base/ip_endpoint.cc
 	src/net/base/net_util.cc
+	src/net/http/http_byte_range.cc
+	src/net/http/http_request_headers.cc
+	src/net/http/http_status_code.cc
+	src/net/http/http_util.cc
 	src/net/server/http_server_request_info.cc
+	src/net/server/http_server_response_info.cc
 	src/net/http_request.cc
 	src/net/http_response.cc
-	src/net/http/http_status_code.cc
 	src/net/io_buffer.cc
+	src/nspr/prtime.cc
+	src/url/url_canon_etc.cc
+	src/url/url_canon_internal.cc
 	src/url/url_canon_ip.cc
 	src/url/url_canon_stdstring.cc
+	src/url/url_constants.cc
+	src/url/url_parse_file.cc
+	src/url/url_util.cc
 )
 
 include_directories(

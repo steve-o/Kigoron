@@ -14,6 +14,21 @@
 
 namespace chromium {
 
+// C standard-library functions like "strncasecmp" and "snprintf" that aren't
+// cross-platform are provided as "base::strncasecmp", and their prototypes
+// are listed below.  These functions are then implemented as inline calls
+// to the platform-specific equivalents in the platform-specific headers.
+
+// Compares the two strings s1 and s2 without regard to case using
+// the current locale; returns 0 if they are equal, 1 if s1 > s2, and -1 if
+// s2 > s1 according to a lexicographic comparison.
+int strcasecmp(const char* s1, const char* s2);
+
+// Compares up to count characters of s1 and s2 without regard to case using
+// the current locale; returns 0 if they are equal, 1 if s1 > s2, and -1 if
+// s2 > s1 according to a lexicographic comparison.
+int strncasecmp(const char* s1, const char* s2, size_t count);
+
 // Wrapper for vsnprintf that always null-terminates and always returns the
 // number of characters that would be in an untruncated formatted
 // string, even when truncation occurs.
@@ -27,6 +42,50 @@ int vsnprintf(char* buffer, size_t size, const char* format, va_list arguments);
 // NOTE: All sizes are in number of characters, NOT in bytes.
 size_t strlcpy(char* dst, const char* src, size_t dst_size);
 
+// ASCII-specific tolower.  The standard library's tolower is locale sensitive,
+// so we don't want to use it here.
+template <class Char> inline Char ToLowerASCII(Char c) {
+  return (c >= 'A' && c <= 'Z') ? (c + ('a' - 'A')) : c;
+}
+
+// ASCII-specific toupper.  The standard library's toupper is locale sensitive,
+// so we don't want to use it here.
+template <class Char> inline Char ToUpperASCII(Char c) {
+  return (c >= 'a' && c <= 'z') ? (c + ('A' - 'a')) : c;
+}
+
+// Function objects to aid in comparing/searching strings.
+
+template<typename Char> struct CaseInsensitiveCompare {
+ public:
+  bool operator()(Char x, Char y) const {
+    // TODO(darin): Do we really want to do locale sensitive comparisons here?
+    // See http://crbug.com/24917
+    return tolower(x) == tolower(y);
+  }
+};
+
+template<typename Char> struct CaseInsensitiveCompareASCII {
+ public:
+  bool operator()(Char x, Char y) const {
+    return ToLowerASCII(x) == ToLowerASCII(y);
+  }
+};
+
+// Converts the elements of the given string.  This version uses a pointer to
+// clearly differentiate it from the non-pointer variant.
+template <class str> inline void StringToLowerASCII(str* s) {
+  for (typename str::iterator i = s->begin(); i != s->end(); ++i)
+    *i = ToLowerASCII(*i);
+}
+
+template <class str> inline str StringToLowerASCII(const str& s) {
+  // for std::string and std::wstring
+  str output(s);
+  StringToLowerASCII(&output);
+  return output;
+}
+
 }  // namespace chromium
 
 #if defined(_WIN32)
@@ -35,7 +94,29 @@ size_t strlcpy(char* dst, const char* src, size_t dst_size);
 #include "chromium/strings/string_util_posix.hh"
 #endif
 
-// Safe standard library wrappers for all platforms.
+// Compare the lower-case form of the given string against the given ASCII
+// string.  This is useful for doing checking if an input string matches some
+// token, and it is optimized to avoid intermediate string copies.  This API is
+// borrowed from the equivalent APIs in Mozilla.
+bool LowerCaseEqualsASCII(const std::string& a, const char* b);
+
+// Same thing, but with string iterators instead.
+bool LowerCaseEqualsASCII(std::string::const_iterator a_begin,
+                                      std::string::const_iterator a_end,
+                                      const char* b);
+bool LowerCaseEqualsASCII(const char* a_begin,
+                                      const char* a_end,
+                                      const char* b);
+
+// Returns true if str starts with search, or false otherwise.
+bool StartsWithASCII(const std::string& str,
+                                 const std::string& search,
+                                 bool case_sensitive);
+
+// Returns true if str ends with search, or false otherwise.
+bool EndsWith(const std::string& str,
+                          const std::string& search,
+                          bool case_sensitive);
 
 extern const char kWhitespaceASCII[];
 
@@ -68,32 +149,6 @@ TrimPositions TrimWhitespaceASCII(const std::string& input,
 TrimPositions TrimWhitespace(const std::string& input,
                                          TrimPositions positions,
                                          std::string* output);
-
-// ASCII-specific tolower.  The standard library's tolower is locale sensitive,
-// so we don't want to use it here.
-template <class Char> inline Char ToLowerASCII(Char c) {
-  return (c >= 'A' && c <= 'Z') ? (c + ('a' - 'A')) : c;
-}
-
-// ASCII-specific toupper.  The standard library's toupper is locale sensitive,
-// so we don't want to use it here.
-template <class Char> inline Char ToUpperASCII(Char c) {
-  return (c >= 'a' && c <= 'z') ? (c + ('A' - 'a')) : c;
-}
-
-// Converts the elements of the given string.  This version uses a pointer to
-// clearly differentiate it from the non-pointer variant.
-template <class str> inline void StringToLowerASCII(str* s) {
-  for (typename str::iterator i = s->begin(); i != s->end(); ++i)
-    *i = ToLowerASCII(*i);
-}
-
-template <class str> inline str StringToLowerASCII(const str& s) {
-  // for std::string and std::wstring
-  str output(s);
-  StringToLowerASCII(&output);
-  return output;
-}
 
 // Determines the type of ASCII character, independent of locale (the C
 // library versions will change based on locale).
