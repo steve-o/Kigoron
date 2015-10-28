@@ -13,8 +13,8 @@
 #include <memory>
 
 #include "net/http_request.hh"
-#include "net/http_response.hh"
 #include "net/io_buffer.hh"
+#include "net/server/http_server_response_info.hh"
 
 #ifdef _WIN32           
 #	define in_port_t	uint16_t
@@ -54,7 +54,7 @@ namespace kigoron
 		void DidRead (const char* data, int length);
 		void OnRequest (std::shared_ptr<net::HttpRequest> request);
 		bool Finwait();
-		void SendResponse (std::shared_ptr<net::HttpResponse> response);
+		void SendResponse (const net::HttpServerResponseInfo& response);
 		bool Write();
 
 		void OnIndex (std::shared_ptr<net::HttpRequest> request);

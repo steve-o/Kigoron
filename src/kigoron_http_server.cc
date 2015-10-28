@@ -140,9 +140,8 @@ kigoron::http_connection_t::OnRequest (
 
 	LOG(WARNING) << "Request not handled. Returning 404: "
 			<< request->relative_url;
-	auto not_found_response = std::make_shared<net::BasicHttpResponse>();
-	not_found_response->set_code (net::HTTP_NOT_FOUND);
-	SendResponse (std::move (not_found_response));
+	auto response = net::HttpServerResponseInfo::CreateFor404();
+	SendResponse (response);
 }
 
 void
@@ -156,7 +155,7 @@ kigoron::http_connection_t::OnIndex (
 	int http_pid;
 	int rc;
 
-	auto index_response = std::make_shared<net::BasicHttpResponse>();
+	auto response = std::make_shared<net::HttpServerResponseInfo>();
 
 /* hostname */
 	rc = gethostname (http_hostname, sizeof (http_hostname));
@@ -215,8 +214,8 @@ kigoron::http_connection_t::OnIndex (
 			"<th>process ID:</th><td>" << http_pid << "</td>"
 		"</tr>"
 		"</table>\n";
-	index_response->set_content (ss.str());
-	SendResponse (std::move (index_response));
+	response->SetBody (ss.str(), "text/html");
+	SendResponse (*response.get());
 }
 
 /* returns true on success, false to abort connection.
@@ -236,10 +235,10 @@ kigoron::http_connection_t::Finwait()
 
 void
 kigoron::http_connection_t::SendResponse (
-	std::shared_ptr<net::HttpResponse> response
+	const net::HttpServerResponseInfo& response
 	)
 {
-	const auto response_string = response->ToResponseString();
+	const auto& response_string = response.Serialize();
 	net::IOBuffer* raw_send_buf = new net::StringIOBuffer (response_string);
 	net::DrainableIOBuffer* send_buf = new net::DrainableIOBuffer (raw_send_buf, response_string.size());
 	write_buf_.reset (send_buf);
