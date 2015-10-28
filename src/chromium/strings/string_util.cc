@@ -6,6 +6,8 @@
 
 #include "chromium/logging.hh"
 
+namespace chromium {
+
 const char kWhitespaceASCII[] = {
   0x09,    // <control-0009> to <control-000D>
   0x0A,
@@ -67,6 +69,8 @@ TrimPositions TrimWhitespace(const std::string& input,
                              std::string* output) {
   return TrimWhitespaceASCII(input, positions, output);
 }
+
+}  // namespace chromium
 
 template<class StringType>
 void DoReplaceSubstringsAfterOffset(StringType* str,

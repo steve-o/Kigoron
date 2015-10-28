@@ -12,8 +12,9 @@
 #include <list>
 #include <memory>
 
-#include "net/http_request.hh"
 #include "net/io_buffer.hh"
+#include "net/server/http_connection.hh"
+#include "net/server/http_server_request_info.hh"
 #include "net/server/http_server_response_info.hh"
 
 #ifdef _WIN32           
@@ -23,7 +24,10 @@
 
 namespace net
 {
+
 class IPEndPoint;
+class HttpConnection;
+
 }
 
 namespace kigoron
@@ -52,17 +56,22 @@ namespace kigoron
 	private:
 		bool Read();
 		void DidRead (const char* data, int length);
-		void OnRequest (std::shared_ptr<net::HttpRequest> request);
+		void OnHttpRequest (const net::HttpServerRequestInfo& info);
 		bool Finwait();
+		void DidClose();
 		void SendResponse (const net::HttpServerResponseInfo& response);
+		void Send (net::HttpStatusCode status_code, const std::string& data, const std::string& content_type);
+		void Send200 (const std::string& data, const std::string& mime_type);
+		void Send404();
+		void Send500 (const std::string& message);
 		bool Write();
 
-		void OnIndex (std::shared_ptr<net::HttpRequest> request);
+		std::string GetIndexPageHTML();
 
 		SOCKET sock_;
 		std::string name_;
+		std::shared_ptr<net::HttpConnection> connection_;
 		HttpState state_;
-		net::HttpRequestParser request_parser_;
 		std::shared_ptr<net::DrainableIOBuffer> write_buf_;
 	};
 
@@ -90,7 +99,13 @@ namespace kigoron
 		SOCKET listen_sock_;
 		std::list<std::shared_ptr<http_connection_t>> connections_;
 
-		friend provider_t;
+		friend class provider_t;
+		friend class http_connection_t;
+// Expects the raw data to be stored in recv_data_. If parsing is successful,
+// will remove the data parsed from recv_data_, leaving only the unused
+// recv data.
+		static bool ParseHeaders (net::HttpConnection* connection, net::HttpServerRequestInfo* info, size_t* pos);
+
 	};
 
 } /* namespace kigoron */

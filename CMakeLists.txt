@@ -129,6 +129,7 @@ set(cxx-sources
 	src/provider.cc
 	src/upa.cc
 	src/upaostream.cc
+	src/chromium/base64.cc
 	src/chromium/chromium_switches.cc
 	src/chromium/command_line.cc
 	src/chromium/debug/stack_trace.cc
@@ -136,8 +137,10 @@ set(cxx-sources
 	src/chromium/files/file.cc
 	src/chromium/files/file_util.cc
 	src/chromium/files/file_util_win.cc
+	src/chromium/md5.cc
 	src/chromium/memory/singleton.cc
 	src/chromium/logging.cc
+	src/chromium/sha1_portable.cc
 	src/chromium/strings/string_number_conversions.cc
 	src/chromium/strings/string_piece.cc
 	src/chromium/strings/string_split.cc
@@ -150,16 +153,17 @@ set(cxx-sources
 	src/chromium/values.cc
 	src/chromium/vlog.cc
 	src/googleurl/url_parse.cc
+	src/modp_b64/modp_b64.cc
 	src/net/base/ip_endpoint.cc
 	src/net/base/net_util.cc
 	src/net/http/http_byte_range.cc
 	src/net/http/http_request_headers.cc
 	src/net/http/http_status_code.cc
 	src/net/http/http_util.cc
+	src/net/server/http_connection.cc
 	src/net/server/http_server_request_info.cc
 	src/net/server/http_server_response_info.cc
-	src/net/http_request.cc
-	src/net/http_response.cc
+	src/net/server/web_socket.cc
 	src/net/io_buffer.cc
 	src/nspr/prtime.cc
 	src/url/url_canon_etc.cc

@@ -33,7 +33,7 @@ bool HttpServerRequestInfo::HasHeaderValue(
   Tokenize(complete_value, ",", &value_items);
   for (std::vector<std::string>::iterator it = value_items.begin();
       it != value_items.end(); ++it) {
-    TrimString(*it, " \t", &*it);
+    chromium::TrimString(*it, " \t", &*it);
     if (*it == header_value)
       return true;
   }

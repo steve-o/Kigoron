@@ -72,6 +72,40 @@ template<typename Char> struct CaseInsensitiveCompareASCII {
   }
 };
 
+// Contains the set of characters representing whitespace in the corresponding
+// encoding. Null-terminated.
+extern const char kWhitespaceASCII[];
+
+// Removes characters in |trim_chars| from the beginning and end of |input|.
+// |trim_chars| must be null-terminated.
+// NOTE: Safe to use the same variable for both |input| and |output|.
+bool TrimString(const std::string& input,
+                            const char trim_chars[],
+                            std::string* output);
+
+// Trims any whitespace from either end of the input string.  Returns where
+// whitespace was found.
+// The non-wide version has two functions:
+// * TrimWhitespaceASCII()
+//   This function is for ASCII strings and only looks for ASCII whitespace;
+// Please choose the best one according to your usage.
+// NOTE: Safe to use the same variable for both input and output.
+enum TrimPositions {
+  TRIM_NONE     = 0,
+  TRIM_LEADING  = 1 << 0,
+  TRIM_TRAILING = 1 << 1,
+  TRIM_ALL      = TRIM_LEADING | TRIM_TRAILING,
+};
+TrimPositions TrimWhitespaceASCII(const std::string& input,
+                                              TrimPositions positions,
+                                              std::string* output);
+
+// Deprecated. This function is only for backward compatibility and calls
+// TrimWhitespaceASCII().
+TrimPositions TrimWhitespace(const std::string& input,
+                                         TrimPositions positions,
+                                         std::string* output);
+
 // Converts the elements of the given string.  This version uses a pointer to
 // clearly differentiate it from the non-pointer variant.
 template <class str> inline void StringToLowerASCII(str* s) {
@@ -117,38 +151,6 @@ bool StartsWithASCII(const std::string& str,
 bool EndsWith(const std::string& str,
                           const std::string& search,
                           bool case_sensitive);
-
-extern const char kWhitespaceASCII[];
-
-// Removes characters in |trim_chars| from the beginning and end of |input|.
-// |trim_chars| must be null-terminated.
-// NOTE: Safe to use the same variable for both |input| and |output|.
-bool TrimString(const std::string& input,
-                            const char trim_chars[],
-                            std::string* output);
-
-// Trims any whitespace from either end of the input string.  Returns where
-// whitespace was found.
-// The non-wide version has two functions:
-// * TrimWhitespaceASCII()
-//   This function is for ASCII strings and only looks for ASCII whitespace;
-// Please choose the best one according to your usage.
-// NOTE: Safe to use the same variable for both input and output.
-enum TrimPositions {
-  TRIM_NONE     = 0,
-  TRIM_LEADING  = 1 << 0,
-  TRIM_TRAILING = 1 << 1,
-  TRIM_ALL      = TRIM_LEADING | TRIM_TRAILING,
-};
-TrimPositions TrimWhitespaceASCII(const std::string& input,
-                                              TrimPositions positions,
-                                              std::string* output);
-
-// Deprecated. This function is only for backward compatibility and calls
-// TrimWhitespaceASCII().
-TrimPositions TrimWhitespace(const std::string& input,
-                                         TrimPositions positions,
-                                         std::string* output);
 
 // Determines the type of ASCII character, independent of locale (the C
 // library versions will change based on locale).

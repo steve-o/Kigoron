@@ -52,7 +52,7 @@ void AppendSwitchesAndArguments(CommandLine& command_line,
   bool parse_switches = true;
   for (size_t i = 1; i < argv.size(); ++i) {
     CommandLine::StringType arg = argv[i];
-    TrimWhitespace(arg, TRIM_ALL, &arg);
+    chromium::TrimWhitespace(arg, chromium::TRIM_ALL, &arg);
 
     CommandLine::StringType switch_string;
     CommandLine::StringType switch_value;
@@ -250,7 +250,7 @@ void CommandLine::PrependWrapper(const CommandLine::StringType& wrapper) {
 
 void CommandLine::ParseFromString(const std::string& command_line) {
   std::string command_line_string;
-  TrimWhitespace(command_line, TRIM_ALL, &command_line_string);
+  chromium::TrimWhitespace(command_line, chromium::TRIM_ALL, &command_line_string);
   if (command_line_string.empty())
     return;
 
