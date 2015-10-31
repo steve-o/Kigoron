@@ -40,7 +40,7 @@ const int kReadBufSize = 4096;
 }  // namespace net
 
 kigoron::http_connection_t::http_connection_t (
-	SOCKET s,
+	net::SocketDescriptor s,
 	const std::string& name
 	)
 	: sock_ (s)
@@ -59,9 +59,9 @@ kigoron::http_connection_t::~http_connection_t()
 void
 kigoron::http_connection_t::Close()
 {
-	if (INVALID_SOCKET != sock_) {
+	if (net::kInvalidSocket != sock_) {
 		closesocket (sock_);
-		sock_ = INVALID_SOCKET;
+		sock_ = net::kInvalidSocket;
 	}
 }
 
@@ -531,7 +531,7 @@ kigoron::http_connection_t::Write()
 
 kigoron::httpd_t::httpd_t (
 	) :
-	listen_sock_ (INVALID_SOCKET)
+	listen_sock_ (net::kInvalidSocket)
 {
 }
 
@@ -552,7 +552,7 @@ kigoron::httpd_t::Start (
 	)
 {
 	listen_sock_ = CreateAndListen ("::", port);
-	if (INVALID_SOCKET == listen_sock_)
+	if (net::kInvalidSocket == listen_sock_)
 		return false;
 
 	net::IPEndPoint address;
@@ -593,7 +593,7 @@ kigoron::httpd_t::GetLocalAddress (
 	return 0;
 }
 
-SOCKET
+net::SocketDescriptor
 kigoron::httpd_t::CreateAndListen (
 	const std::string& ip,
 	in_port_t port
@@ -602,7 +602,7 @@ kigoron::httpd_t::CreateAndListen (
 	int rc;
 	int backlog = SOMAXCONN;
 	sockaddr_in6 addr;
-	SOCKET sock = INVALID_SOCKET;
+	net::SocketDescriptor sock = net::kInvalidSocket;
 	addrinfo hints, *result = nullptr;
 
 /* Resolve ip */
@@ -642,7 +642,7 @@ kigoron::httpd_t::CreateAndListen (
 	
 /* Create socket */
 	sock = socket (AF_INET6, SOCK_STREAM, 0 /* unspecified */);
-	if (INVALID_SOCKET == sock) {
+	if (net::kInvalidSocket == sock) {
 		const int save_errno = WSAGetLastError();
 		char errbuf[1024];
 		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
@@ -760,22 +760,22 @@ kigoron::httpd_t::CreateAndListen (
 	return sock;
 cleanup:
 	closesocket (sock);
-	return INVALID_SOCKET;
+	return net::kInvalidSocket;
 }
 
 void
 kigoron::httpd_t::Close()
 {
-	if (INVALID_SOCKET != listen_sock_) {
+	if (net::kInvalidSocket != listen_sock_) {
 		closesocket (listen_sock_);
-		listen_sock_ = INVALID_SOCKET;
+		listen_sock_ = net::kInvalidSocket;
 	}
 }
 
 std::shared_ptr<kigoron::http_connection_t>
 kigoron::httpd_t::Accept()
 {
-	SOCKET new_sock;
+	net::SocketDescriptor new_sock;
 	char name[INET6_ADDRSTRLEN];
 	struct sockaddr_storage addr;
 	socklen_t addrlen = sizeof (addr);
@@ -785,7 +785,7 @@ kigoron::httpd_t::Accept()
 
 /* Accept new socket */
 	new_sock = accept (listen_sock_, (struct sockaddr*)&addr, &addrlen);
-	if (INVALID_SOCKET == new_sock) {
+	if (net::kInvalidSocket == new_sock) {
 		const int save_errno = WSAGetLastError();
 		if (WSAEWOULDBLOCK == save_errno)
 			goto return_empty;

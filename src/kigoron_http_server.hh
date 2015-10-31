@@ -16,6 +16,7 @@
 #include "net/server/http_connection.hh"
 #include "net/server/http_server_request_info.hh"
 #include "net/server/http_server_response_info.hh"
+#include "net/socket/socket_descriptor.hh"
 
 #ifdef _WIN32           
 #	define in_port_t	uint16_t
@@ -39,14 +40,14 @@ namespace kigoron
 	class http_connection_t
 	{
 	public:
-		explicit http_connection_t (SOCKET s, const std::string& name);
+		explicit http_connection_t (net::SocketDescriptor s, const std::string& name);
 		~http_connection_t();
 
 		void Close();
 		bool OnCanReadWithoutBlocking();
 		bool OnCanWriteWithoutBlocking();
 
-		const SOCKET sock() const {
+		const net::SocketDescriptor sock() const {
 			return sock_;
 		}
 		const std::string& name() const {
@@ -68,7 +69,7 @@ namespace kigoron
 
 		std::string GetIndexPageHTML();
 
-		SOCKET sock_;
+		net::SocketDescriptor sock_;
 		std::string name_;
 		std::shared_ptr<net::HttpConnection> connection_;
 		HttpState state_;
@@ -88,15 +89,15 @@ namespace kigoron
 
 		std::shared_ptr<http_connection_t> Accept();
 
-		const SOCKET sock() const {
+		const net::SocketDescriptor sock() const {
 			return listen_sock_;
 		}
 
 	private:
-		SOCKET CreateAndListen (const std::string& ip, in_port_t port);
+		net::SocketDescriptor CreateAndListen (const std::string& ip, in_port_t port);
 		int GetLocalAddress (net::IPEndPoint* address);
 
-		SOCKET listen_sock_;
+		net::SocketDescriptor listen_sock_;
 		std::list<std::shared_ptr<http_connection_t>> connections_;
 
 		friend class provider_t;

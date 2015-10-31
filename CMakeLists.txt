@@ -164,6 +164,7 @@ set(cxx-sources
 	src/net/server/http_server_request_info.cc
 	src/net/server/http_server_response_info.cc
 	src/net/server/web_socket.cc
+	src/net/socket/socket_descriptor.cc
 	src/net/io_buffer.cc
 	src/nspr/prtime.cc
 	src/url/url_canon_etc.cc
