@@ -155,6 +155,8 @@ set(cxx-sources
 	src/googleurl/url_parse.cc
 	src/modp_b64/modp_b64.cc
 	src/net/base/ip_endpoint.cc
+	src/net/base/net_errors.cc
+	src/net/base/net_errors_win.cc
 	src/net/base/net_util.cc
 	src/net/http/http_byte_range.cc
 	src/net/http/http_request_headers.cc
@@ -165,6 +167,7 @@ set(cxx-sources
 	src/net/server/http_server_response_info.cc
 	src/net/server/web_socket.cc
 	src/net/socket/socket_descriptor.cc
+	src/net/socket/stream_listen_socket.cc
 	src/net/io_buffer.cc
 	src/nspr/prtime.cc
 	src/url/url_canon_etc.cc

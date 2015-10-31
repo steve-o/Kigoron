@@ -84,6 +84,9 @@ std::string IPAddressToStringWithPort(
 // Returns the address as a sequence of bytes in network-byte-order.
 std::string IPAddressToPackedString(const IPAddressNumber& addr);
 
+// Set socket to non-blocking mode
+int SetNonBlocking(int fd);
+
 // Returns AddressFamily of the address.
 AddressFamily GetAddressFamily(
     const IPAddressNumber& address);
