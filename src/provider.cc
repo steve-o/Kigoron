@@ -112,8 +112,8 @@ kigoron::provider_t::Initialize()
 	}
 
 /* Built in HTTPD server. */
-	httpd_.reset (new httpd_t());
-	if (!(bool)httpd_ || !httpd_->Start (7580))
+	server_.reset (new KigoronHttpServer());
+	if (!(bool)server_ || !server_->Start (7580))
 		return false;
 
 	return true;
@@ -212,7 +212,7 @@ kigoron::provider_t::Close()
 	clients_.clear();
 
 /* Drop http port. */
-	httpd_.reset();
+	server_.reset();
 
 /* Closing listening socket. */
 	if (nullptr != rssl_sock_) {
@@ -383,8 +383,8 @@ kigoron::provider_t::Run()
 	in_tv_.tv_sec = 0;
 	in_tv_.tv_usec = 1000 * 100;	// 100ms timeout
 
-	if ((bool)httpd_)
-		FD_SET (httpd_->sock(), &in_rfds_);
+	if ((bool)server_)
+		FD_SET (server_->sock(), &in_rfds_);
 
 	for (;;) {
 		bool did_work = DoWork();
@@ -519,11 +519,11 @@ kigoron::provider_t::DoWork()
 	}
 
 /* New HTTP connection */
-	if (FD_ISSET (httpd_->sock(), &out_rfds_)) {
-		FD_CLR (httpd_->sock(), &out_rfds_);
-		auto c = httpd_->Accept();
+	if (FD_ISSET (server_->sock(), &out_rfds_)) {
+		FD_CLR (server_->sock(), &out_rfds_);
+		auto c = server_->Accept();
 		if ((bool)c) {
-			httpd_->connections_.emplace_back (c);
+			server_->connections_.emplace_back (c);
 			FD_SET (c->sock(), &in_rfds_);
 			FD_SET (c->sock(), &in_wfds_);
 			FD_SET (c->sock(), &in_efds_);
@@ -534,7 +534,7 @@ kigoron::provider_t::DoWork()
 		}
 		did_work = true;
 	}
-	for (auto it = httpd_->connections_.begin(); it != httpd_->connections_.end();) {
+	for (auto it = server_->connections_.begin(); it != server_->connections_.end();) {
 		auto c = *it;
 		if (FD_ISSET (c->sock(), &out_rfds_)) {
 			FD_CLR (c->sock(), &out_rfds_);
@@ -550,7 +550,7 @@ kigoron::provider_t::DoWork()
 		}
 		if (FD_ISSET (c->sock(), &out_efds_)) {
 			auto jt = it++;
-			httpd_->connections_.erase (jt);
+			server_->connections_.erase (jt);
 			FD_CLR (c->sock(), &in_rfds_);
 			FD_CLR (c->sock(), &in_wfds_);
 			FD_CLR (c->sock(), &in_efds_);

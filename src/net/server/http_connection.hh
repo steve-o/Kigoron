@@ -13,7 +13,7 @@
 
 namespace kigoron {
 
-class httpd_t;
+class KigoronHttpServer;
 class http_connection_t;
 
 }
@@ -34,7 +34,7 @@ class HttpConnection {
   int id() const { return id_; }
 
  private:
-  friend class kigoron::httpd_t;
+  friend class kigoron::KigoronHttpServer;
   friend class kigoron::http_connection_t;
   static int last_id_;
 

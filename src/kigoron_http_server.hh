@@ -78,11 +78,11 @@ namespace kigoron
 
 	class provider_t;
 
-	class httpd_t
+	class KigoronHttpServer
 	{
 	public:
-		explicit httpd_t();
-		~httpd_t();
+		explicit KigoronHttpServer();
+		~KigoronHttpServer();
 
 		bool Start (in_port_t port);
 		void Close();

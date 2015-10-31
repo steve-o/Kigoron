@@ -163,7 +163,7 @@ namespace kigoron
 /* Server socket for new connections */
 		RsslServer* rssl_sock_;
 /* Built in HTTP server. */
-		std::shared_ptr<httpd_t> httpd_;
+		std::shared_ptr<KigoronHttpServer> server_;
 /* This flag is set to false when Run should return. */
 		boost::atomic_bool keep_running_;
 

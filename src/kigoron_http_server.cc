@@ -156,7 +156,7 @@ kigoron::http_connection_t::DidRead (
 
 		net::HttpServerRequestInfo request;
 		size_t pos = 0;
-		if (!httpd_t::ParseHeaders(connection, &request, &pos))
+		if (!KigoronHttpServer::ParseHeaders(connection, &request, &pos))
 			break;
 
 // Sets peer address if exists.
@@ -271,7 +271,7 @@ int charToInput(char ch) {
 }
 
 bool
-kigoron::httpd_t::ParseHeaders(net::HttpConnection* connection,
+kigoron::KigoronHttpServer::ParseHeaders(net::HttpConnection* connection,
                               net::HttpServerRequestInfo* info,
                               size_t* ppos) {
   size_t& pos = *ppos;
@@ -529,15 +529,15 @@ kigoron::http_connection_t::Write()
 	}
 }
 
-kigoron::httpd_t::httpd_t (
+kigoron::KigoronHttpServer::KigoronHttpServer (
 	) :
 	listen_sock_ (net::kInvalidSocket)
 {
 }
 
-kigoron::httpd_t::~httpd_t()
+kigoron::KigoronHttpServer::~KigoronHttpServer()
 {
-	DLOG(INFO) << "~httpd_t";
+	DLOG(INFO) << "~KigoronHttpServer";
 	Close();
 /* Summary output */
 	VLOG(3) << "Httpd summary: {"
@@ -547,7 +547,7 @@ kigoron::httpd_t::~httpd_t()
 /* Open HTTP port and listen for incoming connection attempts.
  */
 bool
-kigoron::httpd_t::Start (
+kigoron::KigoronHttpServer::Start (
 	in_port_t port
 	)
 {
@@ -566,7 +566,7 @@ kigoron::httpd_t::Start (
 }
 
 int
-kigoron::httpd_t::GetLocalAddress (
+kigoron::KigoronHttpServer::GetLocalAddress (
 	net::IPEndPoint* address
 	)
 {
@@ -594,7 +594,7 @@ kigoron::httpd_t::GetLocalAddress (
 }
 
 net::SocketDescriptor
-kigoron::httpd_t::CreateAndListen (
+kigoron::KigoronHttpServer::CreateAndListen (
 	const std::string& ip,
 	in_port_t port
 	)
@@ -764,7 +764,7 @@ cleanup:
 }
 
 void
-kigoron::httpd_t::Close()
+kigoron::KigoronHttpServer::Close()
 {
 	if (net::kInvalidSocket != listen_sock_) {
 		closesocket (listen_sock_);
@@ -773,7 +773,7 @@ kigoron::httpd_t::Close()
 }
 
 std::shared_ptr<kigoron::http_connection_t>
-kigoron::httpd_t::Accept()
+kigoron::KigoronHttpServer::Accept()
 {
 	net::SocketDescriptor new_sock;
 	char name[INET6_ADDRSTRLEN];
