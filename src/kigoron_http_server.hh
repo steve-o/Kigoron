@@ -1,8 +1,8 @@
 /* HTTP embedded server.
  */
 
-#ifndef HTTPD_HH_
-#define HTTPD_HH_
+#ifndef KIGORON_HTTP_SERVER_HH_
+#define KIGORON_HTTP_SERVER_HH_
 
 #ifdef _WIN32
 #	include <winsock2.h>
@@ -111,6 +111,6 @@ namespace kigoron
 
 } /* namespace kigoron */
 
-#endif /* HTTPD_HH_ */
+#endif /* KIGORON_HTTP_SERVER_HH_ */
 
 /* eof */
