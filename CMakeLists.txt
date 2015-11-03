@@ -168,6 +168,7 @@ set(cxx-sources
 	src/net/server/web_socket.cc
 	src/net/socket/socket_descriptor.cc
 	src/net/socket/stream_listen_socket.cc
+	src/net/socket/tcp_listen_socket.cc
 	src/net/io_buffer.cc
 	src/nspr/prtime.cc
 	src/url/url_canon_etc.cc
