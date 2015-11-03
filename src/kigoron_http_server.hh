@@ -17,6 +17,7 @@
 #include "net/server/http_server_request_info.hh"
 #include "net/server/http_server_response_info.hh"
 #include "net/socket/socket_descriptor.hh"
+#include "net/socket/stream_listen_socket.hh"
 
 #ifdef _WIN32           
 #	define in_port_t	uint16_t
@@ -79,6 +80,7 @@ namespace kigoron
 	class provider_t;
 
 	class KigoronHttpServer
+		: public net::StreamListenSocket::Delegate
 	{
 	public:
 		explicit KigoronHttpServer();
@@ -90,14 +92,18 @@ namespace kigoron
 		std::shared_ptr<http_connection_t> Accept();
 
 		const net::SocketDescriptor sock() const {
-			return listen_sock_;
+			return server_->socket_;
 		}
 
+// ListenSocketDelegate
+		virtual void DidAccept (net::StreamListenSocket* server, std::shared_ptr<net::StreamListenSocket> socket) override;
+		virtual void DidRead (net::StreamListenSocket* socket, const char* data, int len) override;
+		virtual void DidClose (net::StreamListenSocket* socket) override;
+
 	private:
-		net::SocketDescriptor CreateAndListen (const std::string& ip, in_port_t port);
 		int GetLocalAddress (net::IPEndPoint* address);
 
-		net::SocketDescriptor listen_sock_;
+		std::shared_ptr<net::StreamListenSocket> server_;
 		std::list<std::shared_ptr<http_connection_t>> connections_;
 
 		friend class provider_t;

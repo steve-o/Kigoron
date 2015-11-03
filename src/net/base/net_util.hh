@@ -94,6 +94,31 @@ AddressFamily GetAddressFamily(
 // Maps the given AddressFamily to either AF_INET, AF_INET6 or AF_UNSPEC.
 int ConvertAddressFamily(AddressFamily address_family);
 
+// Parses an IP address literal (either IPv4 or IPv6) to its numeric value.
+// Returns true on success and fills |ip_number| with the numeric value.
+bool ParseIPLiteralToNumber(const std::string& ip_literal,
+                                       IPAddressNumber* ip_number);
+
+// Converts an IPv4 address to an IPv4-mapped IPv6 address.
+// For example 192.168.0.1 would be converted to ::ffff:192.168.0.1.
+IPAddressNumber ConvertIPv4NumberToIPv6Number(
+    const IPAddressNumber& ipv4_number);
+
+// Returns true iff |address| is an IPv4-mapped IPv6 address.
+bool IsIPv4Mapped(const IPAddressNumber& address);
+
+// Converts an IPv4-mapped IPv6 address to IPv4 address. Should only be called
+// on IPv4-mapped IPv6 addresses.
+IPAddressNumber ConvertIPv4MappedToIPv4(
+    const IPAddressNumber& address);
+
+// Retuns the port field of the |sockaddr|.
+const uint16_t* GetPortFieldFromSockaddr(const struct sockaddr* address,
+                                       socklen_t address_len);
+// Returns the value of port in |sockaddr| (in host byte ordering).
+int GetPortFromSockaddr(const struct sockaddr* address,
+                                           socklen_t address_len);
+
 }  // namespace net
 
 #endif  // NET_BASE_NET_UTIL_H_

@@ -20,8 +20,10 @@
 #include "chromium/strings/string_util.hh"
 #include "chromium/strings/stringprintf.hh"
 #include "net/base/ip_endpoint.hh"
+#include "net/base/net_errors.hh"
 #include "net/base/net_util.hh"
 #include "net/server/web_socket.hh"
+#include "net/socket/tcp_listen_socket.hh"
 
 #ifdef _WIN32
 #	define SHUT_WR		SD_SEND
@@ -529,9 +531,7 @@ kigoron::http_connection_t::Write()
 	}
 }
 
-kigoron::KigoronHttpServer::KigoronHttpServer (
-	) :
-	listen_sock_ (net::kInvalidSocket)
+kigoron::KigoronHttpServer::KigoronHttpServer()
 {
 }
 
@@ -551,12 +551,14 @@ kigoron::KigoronHttpServer::Start (
 	in_port_t port
 	)
 {
-	listen_sock_ = CreateAndListen ("::", port);
-	if (net::kInvalidSocket == listen_sock_)
-		return false;
+	if ((bool)server_)
+		return true;
 
+	net::TCPListenSocketFactory factory ("::", port);
+	server_ = factory.CreateAndListen (this);
 	net::IPEndPoint address;
-	if (0 != GetLocalAddress (&address)) {
+
+	if (net::OK != GetLocalAddress (&address)) {
 		NOTREACHED() << "Cannot start HTTP server";
 		return false;
 	}
@@ -571,7 +573,7 @@ kigoron::KigoronHttpServer::GetLocalAddress (
 	)
 {
 	net::SockaddrStorage storage;
-	if (getsockname (listen_sock_, storage.addr, &storage.addr_len)) {
+	if (getsockname (sock(), storage.addr, &storage.addr_len)) {
 		const int save_errno = WSAGetLastError();
 		char errbuf[1024];
 		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
@@ -593,182 +595,12 @@ kigoron::KigoronHttpServer::GetLocalAddress (
 	return 0;
 }
 
-net::SocketDescriptor
-kigoron::KigoronHttpServer::CreateAndListen (
-	const std::string& ip,
-	in_port_t port
-	)
-{
-	int rc;
-	int backlog = SOMAXCONN;
-	sockaddr_in6 addr;
-	net::SocketDescriptor sock = net::kInvalidSocket;
-	addrinfo hints, *result = nullptr;
-
-/* Resolve ip */
-	memset (&hints, 0, sizeof (hints));
-	hints.ai_family		= AF_UNSPEC;
-	hints.ai_socktype	= SOCK_STREAM;
-	hints.ai_protocol	= IPPROTO_TCP;
-	hints.ai_flags		= AI_PASSIVE | AI_ADDRCONFIG | AI_V4MAPPED;
-	rc = getaddrinfo (ip.c_str(), nullptr, &hints, &result);
-	if (0 == rc) {
-		memcpy (&addr, result->ai_addr, result->ai_addrlen);
-		freeaddrinfo (result);
-	} else {
-		const int save_errno = WSAGetLastError();
-		char errbuf[1024];
-		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
-				NULL,            /* source */
-                       		save_errno,      /* message id */
-                       		MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),      /* language id */
-                       		(LPTSTR)errbuf,
-                       		sizeof (errbuf),
-                       		NULL);           /* arguments */
-		LOG(ERROR) << "getaddrinfo: { "
-			  "\"errno\": " << save_errno << ""
-			", \"text\": \"" << errbuf << "\""
-			", \"node\": \"" << ip << "\""
-			", \"service\": null"
-			", \"hints\": { "
-				  "\"ai_family\": \"AF_UNSPEC\""
-				", \"ai_socktype\": \"SOCK_STREAM\""
-				", \"ai_protocol\": 0"
-				," \"ai_flags\": \"AI_NUMERICHOST\""
-				" }";
-			" }";
-		return sock;
-	}
-	
-/* Create socket */
-	sock = socket (AF_INET6, SOCK_STREAM, 0 /* unspecified */);
-	if (net::kInvalidSocket == sock) {
-		const int save_errno = WSAGetLastError();
-		char errbuf[1024];
-		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
-				NULL,            /* source */
-                       		save_errno,      /* message id */
-                       		MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),      /* language id */
-                       		(LPTSTR)errbuf,
-                       		sizeof (errbuf),
-                       		NULL);           /* arguments */
-		LOG(ERROR) << "socket: { "
-			  "\"errno\": " << save_errno << ""
-			", \"text\": \"" << errbuf << "\""
-			", \"family\": \"AF_INET6\""
-			", \"type\": \"SOCK_STREAM\""
-			", \"protocol\": 0"
-			" }";
-		return sock;
-	}
-
-/* IP-any */
-	{
-		DWORD optval = 0;
-		rc = setsockopt (sock, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&optval, sizeof (optval));
-		if (0 != rc) {
-			const int save_errno = WSAGetLastError();
-			char errbuf[1024];
-			FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
-					NULL,            /* source */
-       	                		save_errno,      /* message id */
-       	                		MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),      /* language id */
-       	                		(LPTSTR)errbuf,
-       	                		sizeof (errbuf),
-       	                		NULL);           /* arguments */
-			LOG(WARNING) << "setsockopt: { "
-				  "\"errno\": " << save_errno << ""
-				", \"text\": \"" << errbuf << "\""
-				", \"level\": \"IPPROTO_IPV6\""
-				", \"optname\": \"IPV6_V6ONLY\""
-				", \"optval\": " << optval << ""
-				" }";
-		}
-	}
-
-/* Bind */
-	addr.sin6_port = htons (port);
-	rc = bind (sock, reinterpret_cast<sockaddr*> (&addr), sizeof (addr));
-	if (0 != rc) {
-		const int save_errno = WSAGetLastError();
-		char errbuf[1024];
-		char ip[INET6_ADDRSTRLEN];
-		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
-				NULL,            /* source */
-                       		save_errno,      /* message id */
-                       		MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),      /* language id */
-                       		(LPTSTR)errbuf,
-                       		sizeof (errbuf),
-                       		NULL);           /* arguments */
-		getnameinfo ((struct sockaddr*)&addr, sizeof (addr),
-                            ip, sizeof (ip),
-                            NULL, 0,
-                            NI_NUMERICHOST);
-		LOG(ERROR) << "bind: { "
-			  "\"errno\": " << save_errno << ""
-			", \"text\": \"" << errbuf << "\""
-			", \"family\": \"AF_INET6\""
-			", \"addr\": \"" << ip << "\""
-			", \"port\": " << port << ""
-			" }";
-		goto cleanup;
-	}
-
-/* Listen */
-	rc = listen (sock, backlog);
-	if (0 != rc) {
-		const int save_errno = WSAGetLastError();
-		char errbuf[1024];
-		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
-				NULL,            /* source */
-                       		save_errno,      /* message id */
-                       		MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),      /* language id */
-                       		(LPTSTR)errbuf,
-                       		sizeof (errbuf),
-                       		NULL);           /* arguments */
-		LOG(ERROR) << "listen: { "
-			  "\"errno\": " << save_errno << ""
-			", \"text\": \"" << errbuf << "\""
-			", \"backlog\": \"SOMAXCONN\""
-			" }";
-		goto cleanup;
-	}
-
-/* Non-blocking */
-	{
-		u_long mode = 1;
-		rc = ioctlsocket (sock, FIONBIO, &mode);
-		if (0 != rc) {
-			const int save_errno = WSAGetLastError();
-			char errbuf[1024];
-			FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
-					NULL,            /* source */
-       	                		save_errno,      /* message id */
-       	                		MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),      /* language id */
-       	                		(LPTSTR)errbuf,
-       	                		sizeof (errbuf),
-       	                		NULL);           /* arguments */
-			LOG(ERROR) << "ioctlsocket: { "
-				  "\"errno\": " << save_errno << ""
-				", \"text\": \"" << errbuf << "\""
-				", \"cmd\": \"FIONBIO\""
-				", \"nonblockingMode\": \"" << (mode ? "Enabled" : "Disabled") << "\""
-				" }";
-			goto cleanup;
-		}
-	}
-	return sock;
-cleanup:
-	closesocket (sock);
-	return net::kInvalidSocket;
-}
-
 void
 kigoron::KigoronHttpServer::Close()
 {
-	if (net::kInvalidSocket != listen_sock_) {
-		closesocket (listen_sock_);
-		listen_sock_ = net::kInvalidSocket;
+	if (net::kInvalidSocket != sock()) {
+		closesocket (sock());
+		server_ = nullptr;
 	}
 }
 
@@ -784,7 +616,7 @@ kigoron::KigoronHttpServer::Accept()
 	DLOG(INFO) << "OnConnection";
 
 /* Accept new socket */
-	new_sock = accept (listen_sock_, (struct sockaddr*)&addr, &addrlen);
+	new_sock = accept (sock(), (struct sockaddr*)&addr, &addrlen);
 	if (net::kInvalidSocket == new_sock) {
 		const int save_errno = WSAGetLastError();
 		if (WSAEWOULDBLOCK == save_errno)
@@ -861,6 +693,30 @@ cleanup:
 	closesocket (new_sock);
 return_empty:
 	return std::shared_ptr<http_connection_t>();
+}
+
+void
+kigoron::KigoronHttpServer::DidAccept (
+	net::StreamListenSocket* server,
+	std::shared_ptr<net::StreamListenSocket> socket
+	)
+{
+}
+
+void
+kigoron::KigoronHttpServer::DidRead (
+	net::StreamListenSocket* socket,
+	const char* data,
+	int len
+	)
+{
+}
+
+void
+kigoron::KigoronHttpServer::DidClose (
+	net::StreamListenSocket* socket
+	)
+{
 }
 
 /* eof */

@@ -97,6 +97,8 @@ class StreamListenSocket {
   void OnCanWriteWithoutBlocking(int fd);
   WaitState wait_state_;
 
+// temporary integration
+ public:
   const SocketDescriptor socket_;
 };
 

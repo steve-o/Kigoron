@@ -30,7 +30,19 @@ void PlatformSocketFactory::SetInstance(PlatformSocketFactory* factory) {
 }
 
 SocketDescriptor CreateSocketDefault(int family, int type, int protocol) {
+#if defined(_WIN32)
+  SocketDescriptor result = ::socket(family, type, protocol);
+// if Windows version >= VISTA
+  DWORD value = 0;
+  if (setsockopt(result, IPPROTO_IPV6, IPV6_V6ONLY,
+                 reinterpret_cast<const char*>(&value), sizeof(value))) {
+    closesocket(result);
+    return kInvalidSocket;
+  }
+  return result;
+#else 
   return ::socket(family, type, protocol);
+#endif
 }
 
 SocketDescriptor CreatePlatformSocket(int family, int type, int protocol) {

@@ -18,6 +18,7 @@
 #endif
 
 #include "chromium/logging.hh"
+#include "net/base/ip_endpoint.hh"
 #include "net/base/net_util.hh"
 #include "net/socket/socket_descriptor.hh"
 
@@ -43,26 +44,29 @@ TCPListenSocket::TCPListenSocket(SocketDescriptor s,
 
 TCPListenSocket::~TCPListenSocket() {}
 
-SocketDescriptor TCPListenSocket::CreateAndBind(const string& ip, int port) {
-  SocketDescriptor s = CreatePlatformSocket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+SocketDescriptor TCPListenSocket::CreateAndBind(const string& address_string, int port) {
+  SocketDescriptor s = CreatePlatformSocket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
   if (s != kInvalidSocket) {
 #if defined(OS_POSIX)
     // Allow rapid reuse.
     static const int kOn = 1;
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &kOn, sizeof(kOn));
 #endif
-    sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr(ip.c_str());
-    addr.sin_port = htons (port);
-    if (bind(s, reinterpret_cast<sockaddr*>(&addr), sizeof(addr))) {
+    IPAddressNumber address_number;
+    if (!ParseIPLiteralToNumber(address_string, &address_number)) {
+      return kInvalidSocket;
+    }
+    SockaddrStorage storage;
+    if (!IPEndPoint(address_number, port).ToSockAddr(storage.addr, &storage.addr_len)) {
+      return kInvalidSocket;
+    }
+    if (bind(s, storage.addr, storage.addr_len)) {
 #if defined(_WIN32)
       closesocket(s);
 #elif defined(OS_POSIX)
       close(s);
 #endif
-      LOG(ERROR) << "Could not bind socket to " << ip << ":" << port;
+      LOG(ERROR) << "Could not bind socket to " << address_string << ":" << port;
       s = kInvalidSocket;
     }
   }
@@ -74,12 +78,8 @@ SocketDescriptor TCPListenSocket::CreateAndBindAnyPort(const string& ip,
   SocketDescriptor s = CreateAndBind(ip, 0);
   if (s == kInvalidSocket)
     return kInvalidSocket;
-  sockaddr_in addr;
-  socklen_t addr_size = sizeof(addr);
-  bool failed = getsockname(s, reinterpret_cast<struct sockaddr*>(&addr),
-                            &addr_size) != 0;
-  if (addr_size != sizeof(addr))
-    failed = true;
+  SockaddrStorage storage;
+  bool failed = getsockname(s, storage.addr, &storage.addr_len) != 0;
   if (failed) {
     LOG(ERROR) << "Could not determine bound port, getsockname() failed";
 #if defined(_WIN32)
@@ -89,7 +89,7 @@ SocketDescriptor TCPListenSocket::CreateAndBindAnyPort(const string& ip,
 #endif
     return kInvalidSocket;
   }
-  *port = ntohs (addr.sin_port);
+  *port = GetPortFromSockaddr(storage.addr, storage.addr_len);
   return s;
 }
 

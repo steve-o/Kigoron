@@ -188,4 +188,88 @@ int ConvertAddressFamily(AddressFamily address_family) {
   return AF_UNSPEC;
 }
 
+bool ParseIPLiteralToNumber(const std::string& ip_literal,
+                            IPAddressNumber* ip_number) {
+  // |ip_literal| could be either a IPv4 or an IPv6 literal. If it contains
+  // a colon however, it must be an IPv6 address.
+  if (ip_literal.find(':') != std::string::npos) {
+    // GURL expects IPv6 hostnames to be surrounded with brackets.
+    std::string host_brackets = "[" + ip_literal + "]";
+    url::Component host_comp(0, host_brackets.size());
+
+    // Try parsing the hostname as an IPv6 literal.
+    ip_number->resize(16);  // 128 bits.
+    return url::IPv6AddressToNumber(host_brackets.data(), host_comp,
+                                    &(*ip_number)[0]);
+  }
+
+  // Otherwise the string is an IPv4 address.
+  ip_number->resize(4);  // 32 bits.
+  url::Component host_comp(0, ip_literal.size());
+  int num_components;
+  url::CanonHostInfo::Family family = url::IPv4AddressToNumber(
+      ip_literal.data(), host_comp, &(*ip_number)[0], &num_components);
+  return family == url::CanonHostInfo::IPV4;
+}
+
+namespace {
+
+const unsigned char kIPv4MappedPrefix[] =
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF };
+}
+
+IPAddressNumber ConvertIPv4NumberToIPv6Number(
+    const IPAddressNumber& ipv4_number) {
+  DCHECK(ipv4_number.size() == 4);
+
+  // IPv4-mapped addresses are formed by:
+  // <80 bits of zeros>  + <16 bits of ones> + <32-bit IPv4 address>.
+  IPAddressNumber ipv6_number;
+  ipv6_number.reserve(16);
+  ipv6_number.insert(ipv6_number.end(),
+                     kIPv4MappedPrefix,
+                     kIPv4MappedPrefix + arraysize(kIPv4MappedPrefix));
+  ipv6_number.insert(ipv6_number.end(), ipv4_number.begin(), ipv4_number.end());
+  return ipv6_number;
+}
+
+bool IsIPv4Mapped(const IPAddressNumber& address) {
+  if (address.size() != kIPv6AddressSize)
+    return false;
+  return std::equal(address.begin(),
+                    address.begin() + arraysize(kIPv4MappedPrefix),
+                    kIPv4MappedPrefix);
+}
+
+IPAddressNumber ConvertIPv4MappedToIPv4(const IPAddressNumber& address) {
+  DCHECK(IsIPv4Mapped(address));
+  return IPAddressNumber(address.begin() + arraysize(kIPv4MappedPrefix),
+                         address.end());
+}
+
+const uint16_t* GetPortFieldFromSockaddr(const struct sockaddr* address,
+                                       socklen_t address_len) {
+  if (address->sa_family == AF_INET) {
+    DCHECK_LE(sizeof(sockaddr_in), static_cast<size_t>(address_len));
+    const struct sockaddr_in* sockaddr =
+        reinterpret_cast<const struct sockaddr_in*>(address);
+    return &sockaddr->sin_port;
+  } else if (address->sa_family == AF_INET6) {
+    DCHECK_LE(sizeof(sockaddr_in6), static_cast<size_t>(address_len));
+    const struct sockaddr_in6* sockaddr =
+        reinterpret_cast<const struct sockaddr_in6*>(address);
+    return &sockaddr->sin6_port;
+  } else {
+    NOTREACHED();
+    return NULL;
+  }
+}
+
+int GetPortFromSockaddr(const struct sockaddr* address, socklen_t address_len) {
+  const uint16_t* port_field = GetPortFieldFromSockaddr(address, address_len);
+  if (!port_field)
+    return -1;
+  return ntohs(*port_field);
+}
+
 }  // namespace net
