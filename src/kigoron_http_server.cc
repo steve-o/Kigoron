@@ -166,7 +166,27 @@ kigoron::KigoronHttpServer::GetIndexPageHTML()
 /* pid */
 	http_pid = getpid();
 
-	ss   << "<table>"
+	ss   << "<!DOCTYPE html>"
+		"<html>"
+		"<head>"
+			"<meta charset=\"UTF-8\">"
+			"<script type=\"text/javascript\">"
+			"(function() {"
+				"var sock = new WebSocket(\"ws://\" + window.location.host + \"/ws\", \"protocol\");"
+				"sock.onopen = function() {"
+					"sock.send(\"Ping\");"
+				"};"
+				"sock.onerror = function(error) {"
+					"console.error (\"ws: \" + error);"
+				"};"
+				"sock.onmessage = function(msg) {"
+					"console.log (\"ws: \" + msg);"
+				"};"
+			"})();"
+			"</script>"
+		"</head>"
+		"<body>"
+		"<table>"
 		"<tr>"
 			"<th>host name:</th><td>" << http_hostname << "</td>"
 		"</tr><tr>"
@@ -174,7 +194,10 @@ kigoron::KigoronHttpServer::GetIndexPageHTML()
 		"</tr><tr>"
 			"<th>process ID:</th><td>" << http_pid << "</td>"
 		"</tr>"
-		"</table>\n";
+		"</table>"
+		"</body>"
+		"</html>"
+		"\n";
 	return ss.str();
 }
 
