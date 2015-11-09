@@ -227,6 +227,7 @@ namespace kigoron
 
 		client_t::Delegate* request_delegate_;
 		friend client_t;
+		friend KigoronHttpServer;
 
 /* Reuters Wire Format versions. */
 		boost::atomic_uint16_t min_rwf_version_;

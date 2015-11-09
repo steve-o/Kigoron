@@ -96,6 +96,8 @@ kigoron::KigoronHttpServer::OnWebSocketRequest (
 	AcceptWebSocket(connection_id, info);
 }
 
+#include "upaostream.hh"
+
 void
 kigoron::KigoronHttpServer::OnWebSocketMessage (
 	int connection_id,
@@ -103,6 +105,36 @@ kigoron::KigoronHttpServer::OnWebSocketMessage (
 	)
 {
 	LOG(INFO) << "ws msg: " << connection_id << ": " << data;
+	std::stringstream client_hostname, client_ip;
+	std::ostringstream clients;
+	unsigned i = 1;
+	clients << "[ ";
+	for (auto it = message_loop_for_io_->clients_.begin(); it != message_loop_for_io_->clients_.end(); ++it) {
+		auto handle = it->second->handle();
+		if (nullptr == handle->clientHostname) 
+			client_hostname << "null";
+		else
+			client_hostname << '"' << handle->clientHostname << '"';
+		if (nullptr == handle->clientIP)
+			client_ip << "null";
+		else
+			client_ip << '"' << handle->clientIP << '"';
+		if (i++ > 1)
+			clients << ", ";
+		clients << "{ "
+			  "\"clientHostname\": " << client_hostname.str() << ""
+			", \"clientIP\": " << client_ip.str() << ""
+			", \"connectionType\": \"" << internal::connection_type_string (handle->connectionType) << "\""
+			", \"majorVersion\": " << static_cast<unsigned> (it->second->rwf_major_version()) << ""
+			", \"minorVersion\": " << static_cast<unsigned> (it->second->rwf_minor_version()) << ""
+			", \"pingTimeout\": " << handle->pingTimeout << ""
+			", \"protocolType\": \"" << internal::protocol_type_string (handle->protocolType) << "\""
+			", \"socketId\": " << handle->socketId << ""
+			", \"state\": \"" << internal::channel_state_string (handle->state) << "\""
+			" }";
+	}
+	clients << " ]";
+	SendOverWebSocket(connection_id, clients.str());
 }
 
 void
@@ -177,15 +209,20 @@ kigoron::KigoronHttpServer::GetIndexPageHTML()
 			"<script type=\"text/javascript\">"
 			"(function() {"
 				"var sock = new WebSocket(\"ws://\" + window.location.host + \"/ws\");"
+				"var id = undefined;"
 				"sock.onopen = function() {"
-					"console.log (\"ws: onopen\");"
-					"sock.send(\"Ping\");"
+					"id = window.setInterval(function() {"
+						"sock.send(\"Ping\");"
+					"}, 100);"
 				"};"
-				"sock.onerror = function(error) {"
-					"console.error (\"ws:\", error);"
+				"sock.onerror = function(e) {"
+					"if (typeof id === \"number\") {"
+						"window.clearInterval(id);"
+						"id = undefined;"
+					"}"
 				"};"
 				"sock.onmessage = function(msg) {"
-					"console.log (\"ws: \", msg);"
+					"document.getElementById(\"clients\").textContent = msg.data;"
 				"};"
 			"})();"
 			"</script>"
@@ -198,6 +235,8 @@ kigoron::KigoronHttpServer::GetIndexPageHTML()
 			"<th>user name:</th><td>" << http_username << "</td>"
 		"</tr><tr>"
 			"<th>process ID:</th><td>" << http_pid << "</td>"
+		"</tr><tr>"
+			"<th>clients:</th><td id=\"clients\"></td>"
 		"</tr>"
 		"</table>"
 		"</body>"
