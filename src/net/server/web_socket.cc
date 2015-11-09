@@ -74,7 +74,7 @@ class WebSocketHixie76 : public net::WebSocket {
     std::string origin = request.GetHeaderValue("origin");
     std::string host = request.GetHeaderValue("host");
     std::string location = "ws://" + host + request.path;
-/*    connection_->Send(chromium::StringPrintf(
+    connection_->Send(chromium::StringPrintf(
         "HTTP/1.1 101 WebSocket Protocol Handshake\r\n"
         "Upgrade: WebSocket\r\n"
         "Connection: Upgrade\r\n"
@@ -83,7 +83,7 @@ class WebSocketHixie76 : public net::WebSocket {
         "\r\n",
         origin.c_str(),
         location.c_str()));
-    connection_->Send(reinterpret_cast<char*>(digest.a), 16); */
+    connection_->Send(reinterpret_cast<char*>(digest.a), 16);
   }
 
   virtual ParseResult Read(std::string* message) override {
@@ -106,9 +106,9 @@ class WebSocketHixie76 : public net::WebSocket {
   virtual void Send(const std::string& message) override {
     char message_start = 0;
     char message_end = -1;
-/*    connection_->Send(&message_start, 1);
+    connection_->Send(&message_start, 1);
     connection_->Send(message);
-    connection_->Send(&message_end, 1); */
+    connection_->Send(&message_end, 1);
   }
 
  private:
@@ -121,16 +121,16 @@ class WebSocketHixie76 : public net::WebSocket {
     std::string key2 = request.GetHeaderValue("sec-websocket-key2");
 
     if (key1.empty()) {
-/*      connection->Send(HttpServerResponseInfo::CreateFor500(
+      connection->Send(HttpServerResponseInfo::CreateFor500(
           "Invalid request format. Sec-WebSocket-Key1 is empty or isn't "
-          "specified.")); */
+          "specified."));
       return;
     }
 
     if (key2.empty()) {
-/*      connection->Send(HttpServerResponseInfo::CreateFor500(
+      connection->Send(HttpServerResponseInfo::CreateFor500(
           "Invalid request format. Sec-WebSocket-Key2 is empty or isn't "
-          "specified.")); */
+          "specified."));
       return;
     }
 
@@ -181,9 +181,9 @@ class WebSocketHybi17 : public WebSocket {
 
     std::string key = request.GetHeaderValue("sec-websocket-key");
     if (key.empty()) {
-/*      connection->Send(HttpServerResponseInfo::CreateFor500(
+      connection->Send(HttpServerResponseInfo::CreateFor500(
           "Invalid request format. Sec-WebSocket-Key is empty or isn't "
-          "specified.")); */
+          "specified."));
       return NULL;
     }
     return new WebSocketHybi17(connection, request, pos);
@@ -204,7 +204,7 @@ class WebSocketHybi17 : public WebSocket {
         "Sec-WebSocket-Accept: %s\r\n"
         "\r\n",
         encoded_hash.c_str());
-/*    connection_->Send(response); */
+    connection_->Send(response);
   }
 
   virtual ParseResult Read(std::string* message) override {
@@ -224,7 +224,7 @@ class WebSocketHybi17 : public WebSocket {
     if (closed_)
       return;
     std::string data = WebSocket::EncodeFrameHybi17(message, 0);
-/*    connection_->Send(data); */
+    connection_->Send(data);
   }
 
  private:

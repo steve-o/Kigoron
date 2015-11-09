@@ -92,6 +92,8 @@ kigoron::KigoronHttpServer::OnWebSocketRequest (
 	const net::HttpServerRequestInfo& info
 	)
 {
+	LOG(INFO) << "ws request: " << connection_id;
+	AcceptWebSocket(connection_id, info);
 }
 
 void
@@ -100,6 +102,7 @@ kigoron::KigoronHttpServer::OnWebSocketMessage (
 	const std::string& data
 	)
 {
+	LOG(INFO) << "ws msg: " << connection_id << ": " << data;
 }
 
 void
@@ -107,6 +110,7 @@ kigoron::KigoronHttpServer::OnClose (
 	int connection_id
 	)
 {
+	LOG(INFO) << "close: " << connection_id;
 }
 
 std::string
@@ -172,15 +176,16 @@ kigoron::KigoronHttpServer::GetIndexPageHTML()
 			"<meta charset=\"UTF-8\">"
 			"<script type=\"text/javascript\">"
 			"(function() {"
-				"var sock = new WebSocket(\"ws://\" + window.location.host + \"/ws\", \"protocol\");"
+				"var sock = new WebSocket(\"ws://\" + window.location.host + \"/ws\");"
 				"sock.onopen = function() {"
+					"console.log (\"ws: onopen\");"
 					"sock.send(\"Ping\");"
 				"};"
 				"sock.onerror = function(error) {"
-					"console.error (\"ws: \" + error);"
+					"console.error (\"ws:\", error);"
 				"};"
 				"sock.onmessage = function(msg) {"
-					"console.log (\"ws: \" + msg);"
+					"console.log (\"ws: \", msg);"
 				"};"
 			"})();"
 			"</script>"
@@ -352,7 +357,7 @@ kigoron::KigoronHttpServer::DidRead (
 				Close(connection->id());
 				break;
 			}
-			LOG(INFO) << "ws:" << connection->id() << ": " << message;
+			OnWebSocketMessage(connection->id(), message);
 			continue;
 		}
 
@@ -371,7 +376,7 @@ kigoron::KigoronHttpServer::DidRead (
 
 			if (!connection->web_socket_.get())  // Not enough data was received.
 				break;
-			LOG(INFO) << "ws:" << connection->id() << ": request";
+			OnWebSocketRequest(connection->id(), request);
 			connection->Shift(pos);
 			continue;
 		}
