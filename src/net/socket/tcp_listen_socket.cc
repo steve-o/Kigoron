@@ -28,18 +28,20 @@ namespace net {
 
 // static
 std::shared_ptr<TCPListenSocket> TCPListenSocket::CreateAndListen(
+    kigoron::provider_t* message_loop_for_io,
     const string& ip, int port, StreamListenSocket::Delegate* del) {
   SocketDescriptor s = CreateAndBind(ip, port);
   if (s == kInvalidSocket)
     return std::shared_ptr<TCPListenSocket>();
-  std::shared_ptr<TCPListenSocket> sock(new TCPListenSocket(s, del));
+  std::shared_ptr<TCPListenSocket> sock(new TCPListenSocket(message_loop_for_io, s, del));
   sock->Listen();
   return std::move (sock);
 }
 
-TCPListenSocket::TCPListenSocket(SocketDescriptor s,
+TCPListenSocket::TCPListenSocket(kigoron::provider_t* message_loop_for_io,
+                                 SocketDescriptor s,
                                  StreamListenSocket::Delegate* del)
-    : StreamListenSocket(s, del) {
+    : StreamListenSocket(message_loop_for_io, s, del) {
 }
 
 TCPListenSocket::~TCPListenSocket() {}
@@ -98,14 +100,15 @@ void TCPListenSocket::Accept() {
   if (conn == kInvalidSocket)
     return;
   std::shared_ptr<TCPListenSocket> sock(
-      new TCPListenSocket(conn, socket_delegate_));
+      new TCPListenSocket(message_loop_for_io_, conn, socket_delegate_));
   // It's up to the delegate to AddRef if it wants to keep it around.
   sock->WatchSocket(WAITING_READ);
   socket_delegate_->DidAccept(this, std::static_pointer_cast<StreamListenSocket>(sock));
 }
 
-TCPListenSocketFactory::TCPListenSocketFactory(const string& ip, int port)
-    : ip_(ip),
+TCPListenSocketFactory::TCPListenSocketFactory(kigoron::provider_t* message_loop_for_io, const string& ip, int port)
+    : message_loop_for_io_(message_loop_for_io),
+      ip_(ip),
       port_(port) {
 }
 
@@ -113,7 +116,7 @@ TCPListenSocketFactory::~TCPListenSocketFactory() {}
 
 std::shared_ptr<StreamListenSocket> TCPListenSocketFactory::CreateAndListen(
     StreamListenSocket::Delegate* delegate) const {
-  return std::static_pointer_cast<StreamListenSocket>(TCPListenSocket::CreateAndListen(ip_, port_, delegate));
+  return std::static_pointer_cast<StreamListenSocket>(TCPListenSocket::CreateAndListen(message_loop_for_io_, ip_, port_, delegate));
 }
 
 }  // namespace net

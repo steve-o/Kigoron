@@ -19,6 +19,7 @@
 
 #include "chromium/basictypes.hh"
 #include "net/base/address_family.hh"
+#include "net/socket/socket_descriptor.hh"
 
 namespace net {
 
@@ -85,7 +86,7 @@ std::string IPAddressToStringWithPort(
 std::string IPAddressToPackedString(const IPAddressNumber& addr);
 
 // Set socket to non-blocking mode
-int SetNonBlocking(int fd);
+int SetNonBlocking(SocketDescriptor fd);
 
 // Returns AddressFamily of the address.
 AddressFamily GetAddressFamily(

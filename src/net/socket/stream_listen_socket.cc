@@ -1,4 +1,4 @@
-// Copyright (c) 2012 The Chromium Authors. All rights reserved.
+
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -44,9 +44,11 @@ const int StreamListenSocket::kSocketError = SOCKET_ERROR;
 const int StreamListenSocket::kSocketError = -1;
 #endif
 
-StreamListenSocket::StreamListenSocket(SocketDescriptor s,
+StreamListenSocket::StreamListenSocket(kigoron::provider_t* message_loop_for_io,
+                                       SocketDescriptor s,
                                        StreamListenSocket::Delegate* del)
-    : socket_delegate_(del),
+    : message_loop_for_io_(message_loop_for_io),
+      socket_delegate_(del),
       socket_(s) {
   wait_state_ = NOT_WAITING;
 }
@@ -194,13 +196,16 @@ void StreamListenSocket::CloseSocket() {
 }
 
 void StreamListenSocket::WatchSocket(WaitState state) {
+  message_loop_for_io_->WatchFileDescriptor(
+      socket_, true, kigoron::provider_t::WATCH_READ, &watcher_, this);
   wait_state_ = state;
 }
 
 void StreamListenSocket::UnwatchSocket() {
+  watcher_.StopWatchingFileDescriptor();
 }
 
-void StreamListenSocket::OnCanReadWithoutBlocking(int fd) {
+void StreamListenSocket::OnFileCanReadWithoutBlocking(SocketDescriptor fd) {
   switch (wait_state_) {
     case WAITING_ACCEPT:
       Accept();
@@ -215,7 +220,7 @@ void StreamListenSocket::OnCanReadWithoutBlocking(int fd) {
   }
 }
 
-void StreamListenSocket::OnCanWriteWithoutBlocking(int fd) {
+void StreamListenSocket::OnFileCanWriteWithoutBlocking(SocketDescriptor fd) {
   // MessagePumpLibevent callback, we don't listen for write events
   // so we shouldn't ever reach here.
   NOTREACHED();

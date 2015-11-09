@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "net/io_buffer.hh"
+#include "net/http/http_status_code.hh"
 #include "net/server/http_connection.hh"
 #include "net/server/http_server_request_info.hh"
 #include "net/server/http_server_response_info.hh"
@@ -34,66 +35,39 @@ class HttpConnection;
 
 namespace kigoron
 {
-	enum HttpState { HTTP_STATE_READ,
-                          HTTP_STATE_WRITE,
-                          HTTP_STATE_FINWAIT };
-
-	class http_connection_t
-	{
-	public:
-		explicit http_connection_t (net::SocketDescriptor s, const std::string& name);
-		~http_connection_t();
-
-		void Close();
-		bool OnCanReadWithoutBlocking();
-		bool OnCanWriteWithoutBlocking();
-
-		const net::SocketDescriptor sock() const {
-			return sock_;
-		}
-		const std::string& name() const {
-			return name_;
-		}
-
-	private:
-		bool Read();
-		void DidRead (const char* data, int length);
-		void OnHttpRequest (const net::HttpServerRequestInfo& info);
-		bool Finwait();
-		void DidClose();
-		void SendResponse (const net::HttpServerResponseInfo& response);
-		void Send (net::HttpStatusCode status_code, const std::string& data, const std::string& content_type);
-		void Send200 (const std::string& data, const std::string& mime_type);
-		void Send404();
-		void Send500 (const std::string& message);
-		bool Write();
-
-		std::string GetIndexPageHTML();
-
-		net::SocketDescriptor sock_;
-		std::string name_;
-		std::shared_ptr<net::HttpConnection> connection_;
-		HttpState state_;
-		std::shared_ptr<net::DrainableIOBuffer> write_buf_;
-	};
-
 	class provider_t;
 
 	class KigoronHttpServer
 		: public net::StreamListenSocket::Delegate
 	{
 	public:
-		explicit KigoronHttpServer();
+		void OnHttpRequest (int connection_id, const net::HttpServerRequestInfo& info);
+		void OnWebSocketRequest(int connection_id, const net::HttpServerRequestInfo& info);
+		void OnWebSocketMessage(int connection_id, const std::string& data);
+		void OnClose(int connection_id);
+
+		explicit KigoronHttpServer (provider_t* message_loop_for_io);
 		~KigoronHttpServer();
 
+		void AcceptWebSocket(int connection_id, const net::HttpServerRequestInfo& request);
+		void SendOverWebSocket(int connection_id, const std::string& data);
+// Sends the provided data directly to the given connection. No validation is
+// performed that data constitutes a valid HTTP response. A valid HTTP
+// response may be split across multiple calls to SendRaw.
+		void SendRaw(int connection_id, const std::string& data);
+		void SendResponse(int connection_id, const net::HttpServerResponseInfo& response);
+		void Send(int connection_id, net::HttpStatusCode status_code, const std::string& data, const std::string& mime_type);
+		void Send200(int connection_id, const std::string& data, const std::string& mime_type);
+		void Send404(int connection_id);
+		void Send500(int connection_id, const std::string& message);
+
+		void Close(int connection_id);
+
+// Copies the local address to |address|. Returns a network error code.
+		int GetLocalAddress (net::IPEndPoint* address);
+
 		bool Start (in_port_t port);
-		void Close();
-
-		std::shared_ptr<http_connection_t> Accept();
-
-		const net::SocketDescriptor sock() const {
-			return server_->socket_;
-		}
+		std::string GetIndexPageHTML();
 
 // ListenSocketDelegate
 		virtual void DidAccept (net::StreamListenSocket* server, std::shared_ptr<net::StreamListenSocket> socket) override;
@@ -101,18 +75,23 @@ namespace kigoron
 		virtual void DidClose (net::StreamListenSocket* socket) override;
 
 	private:
-		int GetLocalAddress (net::IPEndPoint* address);
-
-		std::shared_ptr<net::StreamListenSocket> server_;
-		std::list<std::shared_ptr<http_connection_t>> connections_;
+		provider_t* message_loop_for_io_;
 
 		friend class provider_t;
-		friend class http_connection_t;
+		friend class net::HttpConnection;
 // Expects the raw data to be stored in recv_data_. If parsing is successful,
 // will remove the data parsed from recv_data_, leaving only the unused
 // recv data.
 		static bool ParseHeaders (net::HttpConnection* connection, net::HttpServerRequestInfo* info, size_t* pos);
 
+		net::HttpConnection* FindConnection(int connection_id);
+		net::HttpConnection* FindConnection(net::StreamListenSocket* socket);
+
+		std::shared_ptr<net::StreamListenSocket> server_;
+		typedef std::map<int, net::HttpConnection*> IdToConnectionMap;
+		IdToConnectionMap id_to_connection_;
+		typedef std::map<net::StreamListenSocket*, net::HttpConnection*> SocketToConnectionMap;
+		SocketToConnectionMap socket_to_connection_;
 	};
 
 } /* namespace kigoron */

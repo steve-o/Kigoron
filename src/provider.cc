@@ -13,6 +13,7 @@
 #include "chromium/logging.hh"
 #include "upaostream.hh"
 #include "client.hh"
+#include "kigoron_http_server.hh"
 
 /* Reuters Wire Format nomenclature for RDM dictionary names. */
 static const std::string kRdmFieldDictionaryName ("RWFFld");
@@ -112,7 +113,7 @@ kigoron::provider_t::Initialize()
 	}
 
 /* Built in HTTPD server. */
-	server_.reset (new KigoronHttpServer());
+	server_.reset (new KigoronHttpServer (this));
 	if (!(bool)server_ || !server_->Start (7580))
 		return false;
 
@@ -383,8 +384,14 @@ kigoron::provider_t::Run()
 	in_tv_.tv_sec = 0;
 	in_tv_.tv_usec = 1000 * 100;	// 100ms timeout
 
-	if ((bool)server_)
-		FD_SET (server_->sock(), &in_rfds_);
+/* reset any Chromium sockets that are lost from selector */
+	for (auto it = watch_list_.begin();
+		it != watch_list_.end();
+		++it)
+	{
+		net::SocketDescriptor fd = it->second;
+		FD_SET (fd, &in_rfds_);
+	}
 
 	for (;;) {
 		bool did_work = DoWork();
@@ -518,49 +525,100 @@ kigoron::provider_t::DoWork()
 		}
 	}
 
-/* New HTTP connection */
-	if (FD_ISSET (server_->sock(), &out_rfds_)) {
-		FD_CLR (server_->sock(), &out_rfds_);
-		auto c = server_->Accept();
-		if ((bool)c) {
-			server_->connections_.emplace_back (c);
-			FD_SET (c->sock(), &in_rfds_);
-			FD_SET (c->sock(), &in_wfds_);
-			FD_SET (c->sock(), &in_efds_);
-			LOG(INFO) << "HTTP client socket created: { "
-				  "\"clientIP\": \"" << c->name() << "\""
-				", \"socketId\": " << c->sock() << ""
-			" }";
-		}
-		did_work = true;
-	}
-	for (auto it = server_->connections_.begin(); it != server_->connections_.end();) {
-		auto c = *it;
-		if (FD_ISSET (c->sock(), &out_rfds_)) {
-			FD_CLR (c->sock(), &out_rfds_);
-			if (!c->OnCanReadWithoutBlocking())
-				FD_SET (c->sock(), &out_efds_);
+/* Chromium sockets, exceptions are ignored. */
+LOG(INFO) << "size: " << watch_list_.size();
+	for (auto it = watch_list_.begin();
+		it != watch_list_.end();
+		++it)
+	{
+		FileDescriptorWatcher* controller = it->first;
+		net::SocketDescriptor fd = it->second;
+LOG(INFO) << "check: " << fd;
+		if (FD_ISSET (fd, &out_rfds_)) {
+			FD_CLR (fd, &out_rfds_);
+LOG(INFO) << "read: " << fd;
+			controller->OnFileCanReadWithoutBlocking (fd, this);
 			did_work = true;
 		}
-		if (FD_ISSET (c->sock(), &out_wfds_)) {
-			FD_CLR (c->sock(), &out_wfds_);
-			if (!c->OnCanWriteWithoutBlocking())
-				FD_SET (c->sock(), &out_efds_);
+		if (FD_ISSET (fd, &out_wfds_)) {
+			FD_CLR (fd, &out_wfds_);
+			controller->OnFileCanWriteWithoutBlocking (fd, this);
 			did_work = true;
-		}
-		if (FD_ISSET (c->sock(), &out_efds_)) {
-			auto jt = it++;
-			server_->connections_.erase (jt);
-			FD_CLR (c->sock(), &in_rfds_);
-			FD_CLR (c->sock(), &in_wfds_);
-			FD_CLR (c->sock(), &in_efds_);
-			c->Close();
-		} else {
-			++it;
 		}
 	}
 
 	return did_work;
+}
+
+/* Add a Chromium socket to the message loop monitoring pool */
+bool
+kigoron::provider_t::WatchFileDescriptor (
+	net::SocketDescriptor fd,
+	bool persistent,
+	kigoron::provider_t::Mode mode,
+	kigoron::provider_t::FileDescriptorWatcher* controller,
+	kigoron::provider_t::Watcher* delegate
+	)
+{
+	DCHECK_GE(fd, 0);
+	DCHECK(controller);
+	DCHECK(delegate);
+	DCHECK(mode == WATCH_READ || mode == WATCH_WRITE || mode == WATCH_READ_WRITE);
+
+	if (mode & WATCH_READ) {
+LOG(INFO) << "watch: " << fd;
+		FD_SET (fd, &in_rfds_);
+	}
+	if (mode & WATCH_WRITE) {
+		FD_SET (fd, &in_wfds_);
+	}
+
+	watch_list_.emplace (std::make_pair (controller, fd));
+
+	controller->set_watcher (delegate);
+	controller->set_pump (this);
+
+	return true;
+}
+
+kigoron::provider_t::FileDescriptorWatcher::FileDescriptorWatcher()
+	: pump_ (nullptr)
+	, watcher_ (nullptr)
+{
+}
+
+kigoron::provider_t::FileDescriptorWatcher::~FileDescriptorWatcher()
+{
+}
+
+bool
+kigoron::provider_t::FileDescriptorWatcher::StopWatchingFileDescriptor()
+{
+	auto rv = pump_->watch_list_.erase (this);
+	pump_ = nullptr;
+	watcher_ = nullptr;
+	return (rv == 1);
+}
+
+void
+kigoron::provider_t::FileDescriptorWatcher::OnFileCanReadWithoutBlocking (
+	net::SocketDescriptor fd,
+	kigoron::provider_t* pump
+	)
+{
+	if (!watcher_)
+		return;
+	watcher_->OnFileCanReadWithoutBlocking (fd);
+}
+
+void
+kigoron::provider_t::FileDescriptorWatcher::OnFileCanWriteWithoutBlocking (
+	net::SocketDescriptor fd,
+	kigoron::provider_t* pump
+	)
+{
+	DCHECK(watcher_);
+	watcher_->OnFileCanWriteWithoutBlocking (fd);
 }
 
 void

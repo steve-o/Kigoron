@@ -25,11 +25,14 @@
 #include "chromium/basictypes.hh"
 #include "net/socket/socket_descriptor.hh"
 
+// temporary integration.
+#include "provider.hh"
+
 namespace net {
 
 class IPEndPoint;
 
-class StreamListenSocket {
+class StreamListenSocket : public kigoron::provider_t::Watcher {
 
  public:
   virtual ~StreamListenSocket();
@@ -72,7 +75,7 @@ class StreamListenSocket {
     WAITING_READ     = 2
   };
 
-  explicit StreamListenSocket(SocketDescriptor s, Delegate* del);
+  explicit StreamListenSocket(kigoron::provider_t* message_loop_for_io, SocketDescriptor s, Delegate* del);
 
   SocketDescriptor AcceptSocket();
   virtual void Accept() = 0;
@@ -93,11 +96,15 @@ class StreamListenSocket {
   void SendInternal(const char* bytes, int len);
 
   // Called by MessagePumpLibevent when the socket is ready to do I/O.
-  void OnCanReadWithoutBlocking(int fd);
-  void OnCanWriteWithoutBlocking(int fd);
+  virtual void OnFileCanReadWithoutBlocking(SocketDescriptor fd) override;
+  virtual void OnFileCanWriteWithoutBlocking(SocketDescriptor fd) override;
   WaitState wait_state_;
 
 // temporary integration
+  kigoron::provider_t::FileDescriptorWatcher watcher_;
+ protected:
+  kigoron::provider_t* message_loop_for_io_;
+
  public:
   const SocketDescriptor socket_;
 };

@@ -39,7 +39,7 @@
 
 namespace net {
 
-int SetNonBlocking(int fd) {
+int SetNonBlocking(SocketDescriptor fd) {
 #if defined(_WIN32)
   unsigned long no_block = 1;
   return ioctlsocket(fd, FIONBIO, &no_block);

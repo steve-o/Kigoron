@@ -14,19 +14,23 @@
 namespace kigoron {
 
 class KigoronHttpServer;
-class http_connection_t;
 
 }
 
 namespace net {
 
 class HttpServerResponseInfo;
+class StreamListenSocket;
 class WebSocket;
 
 class HttpConnection {
  public:
-  explicit HttpConnection();
+  explicit HttpConnection (kigoron::KigoronHttpServer* server, std::shared_ptr<StreamListenSocket> sock);
   ~HttpConnection();
+
+  void Send(const std::string& data);
+  void Send(const char* bytes, int len);
+  void Send(const HttpServerResponseInfo& response);
 
   void Shift(int num_bytes);
 
@@ -35,9 +39,10 @@ class HttpConnection {
 
  private:
   friend class kigoron::KigoronHttpServer;
-  friend class kigoron::http_connection_t;
   static int last_id_;
 
+  kigoron::KigoronHttpServer* server_;
+  std::shared_ptr<StreamListenSocket> socket_;
   std::shared_ptr<WebSocket> web_socket_;
   std::string recv_data_;
   int id_;
