@@ -182,11 +182,13 @@ void StreamListenSocket::Close() {
   if (wait_state_ == NOT_WAITING)
     return;
   wait_state_ = NOT_WAITING;
+  UnwatchSocket();
   socket_delegate_->DidClose(this);
 }
 
 void StreamListenSocket::CloseSocket() {
   if (socket_ != kInvalidSocket) {
+    UnwatchSocket();
 #if defined(_WIN32)
     closesocket(socket_);
 #elif defined(OS_POSIX)

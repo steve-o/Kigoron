@@ -104,36 +104,10 @@ kigoron::KigoronHttpServer::OnWebSocketMessage (
 	const std::string& data
 	)
 {
-	LOG(INFO) << "ws msg: " << connection_id << ": " << data;
+//	LOG(INFO) << "ws msg: " << connection_id << ": " << data;
 	std::stringstream client_hostname, client_ip;
 	std::ostringstream clients;
-	unsigned i = 1;
-	clients << "[ ";
-	for (auto it = message_loop_for_io_->clients_.begin(); it != message_loop_for_io_->clients_.end(); ++it) {
-		auto handle = it->second->handle();
-		if (nullptr == handle->clientHostname) 
-			client_hostname << "null";
-		else
-			client_hostname << '"' << handle->clientHostname << '"';
-		if (nullptr == handle->clientIP)
-			client_ip << "null";
-		else
-			client_ip << '"' << handle->clientIP << '"';
-		if (i++ > 1)
-			clients << ", ";
-		clients << "{ "
-			  "\"clientHostname\": " << client_hostname.str() << ""
-			", \"clientIP\": " << client_ip.str() << ""
-			", \"connectionType\": \"" << internal::connection_type_string (handle->connectionType) << "\""
-			", \"majorVersion\": " << static_cast<unsigned> (it->second->rwf_major_version()) << ""
-			", \"minorVersion\": " << static_cast<unsigned> (it->second->rwf_minor_version()) << ""
-			", \"pingTimeout\": " << handle->pingTimeout << ""
-			", \"protocolType\": \"" << internal::protocol_type_string (handle->protocolType) << "\""
-			", \"socketId\": " << handle->socketId << ""
-			", \"state\": \"" << internal::channel_state_string (handle->state) << "\""
-			" }";
-	}
-	clients << " ]";
+	clients << message_loop_for_io_->clients_.size();
 	SendOverWebSocket(connection_id, clients.str());
 }
 
@@ -215,7 +189,7 @@ kigoron::KigoronHttpServer::GetIndexPageHTML()
 						"sock.send(\"Ping\");"
 					"}, 100);"
 				"};"
-				"sock.onerror = function(e) {"
+				"sock.onclose = function() {"
 					"if (typeof id === \"number\") {"
 						"window.clearInterval(id);"
 						"id = undefined;"

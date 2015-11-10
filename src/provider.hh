@@ -95,6 +95,8 @@ namespace kigoron
 			virtual ~Watcher() {}
 		};
 
+		enum Mode;
+
 // Object returned by WatchFileDescriptor to manage further watching.
 		class FileDescriptorWatcher {
 		public:
@@ -107,16 +109,29 @@ namespace kigoron
 
 		private:
 			friend class provider_t;
-			void set_watcher(Watcher* watcher) { watcher_ = watcher; }
+
+			typedef std::pair<net::SocketDescriptor, Mode> event;
+
+// Called by MessagePumpLibevent, ownership of |e| is transferred to this
+// object.
+			void Init(event* e);
+
+// Used by MessagePumpLibevent to take ownership of event_.
+			event* ReleaseEvent();
 
 			void set_pump(provider_t* pump) { pump_ = pump; }
 			provider_t* pump() const { return pump_; }
 
+			void set_watcher(Watcher* watcher) { watcher_ = watcher; }
+
 			void OnFileCanReadWithoutBlocking(net::SocketDescriptor fd, provider_t* pump);
 			void OnFileCanWriteWithoutBlocking(net::SocketDescriptor fd, provider_t* pump);
 
+/* pretend fd is a libevent event object */
+			event* event_;
 			Watcher* watcher_;
 			provider_t* pump_;
+			std::shared_ptr<FileDescriptorWatcher> weak_factory_;
 		};
 
 		enum Mode {
@@ -209,7 +224,7 @@ namespace kigoron
 		RsslServer* rssl_sock_;
 /* Built in HTTP server. */
 		std::shared_ptr<KigoronHttpServer> server_;
-		boost::unordered_map<FileDescriptorWatcher*, net::SocketDescriptor> watch_list_;
+		std::list<std::weak_ptr<FileDescriptorWatcher>> watch_list_;
 /* This flag is set to false when Run should return. */
 		boost::atomic_bool keep_running_;
 

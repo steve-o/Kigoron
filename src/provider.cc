@@ -112,6 +112,8 @@ kigoron::provider_t::Initialize()
 		rssl_sock_ = s;
 	}
 
+/* temporary race condition setting selector */
+	FD_ZERO (&in_rfds_);
 /* Built in HTTPD server. */
 	server_.reset (new KigoronHttpServer (this));
 	if (!(bool)server_ || !server_->Start (7580))
@@ -389,8 +391,10 @@ kigoron::provider_t::Run()
 		it != watch_list_.end();
 		++it)
 	{
-		net::SocketDescriptor fd = it->second;
-		FD_SET (fd, &in_rfds_);
+		if (auto sp = it->lock()) {
+			net::SocketDescriptor fd = sp->event_->first;
+			FD_SET (fd, &in_rfds_);
+		}
 	}
 
 	for (;;) {
@@ -526,24 +530,26 @@ kigoron::provider_t::DoWork()
 	}
 
 /* Chromium sockets, exceptions are ignored. */
-LOG(INFO) << "size: " << watch_list_.size();
 	for (auto it = watch_list_.begin();
-		it != watch_list_.end();
-		++it)
+		it != watch_list_.end();)
 	{
-		FileDescriptorWatcher* controller = it->first;
-		net::SocketDescriptor fd = it->second;
-LOG(INFO) << "check: " << fd;
-		if (FD_ISSET (fd, &out_rfds_)) {
-			FD_CLR (fd, &out_rfds_);
-LOG(INFO) << "read: " << fd;
-			controller->OnFileCanReadWithoutBlocking (fd, this);
-			did_work = true;
-		}
-		if (FD_ISSET (fd, &out_wfds_)) {
-			FD_CLR (fd, &out_wfds_);
-			controller->OnFileCanWriteWithoutBlocking (fd, this);
-			did_work = true;
+		if (auto sp = it->lock()) {
+			FileDescriptorWatcher* controller = sp.get();
+			net::SocketDescriptor fd = controller->event_->first;
+			if (FD_ISSET (fd, &out_rfds_)) {
+				FD_CLR (fd, &out_rfds_);
+				controller->OnFileCanReadWithoutBlocking (fd, this);
+				did_work = true;
+			}
+			if (FD_ISSET (fd, &out_wfds_)) {
+				FD_CLR (fd, &out_wfds_);
+				controller->OnFileCanWriteWithoutBlocking (fd, this);
+				did_work = true;
+			}
+			++it;
+		} else {
+			auto jt = it++;
+			watch_list_.erase (jt);
 		}
 	}
 
@@ -566,14 +572,25 @@ kigoron::provider_t::WatchFileDescriptor (
 	DCHECK(mode == WATCH_READ || mode == WATCH_WRITE || mode == WATCH_READ_WRITE);
 
 	if (mode & WATCH_READ) {
-LOG(INFO) << "watch: " << fd;
 		FD_SET (fd, &in_rfds_);
 	}
 	if (mode & WATCH_WRITE) {
 		FD_SET (fd, &in_wfds_);
 	}
 
-	watch_list_.emplace (std::make_pair (controller, fd));
+	std::unique_ptr<FileDescriptorWatcher::event> evt (controller->ReleaseEvent());
+	if (!(bool)evt) {
+		evt.reset (new FileDescriptorWatcher::event (fd, mode));
+	} else {
+		evt->first = fd;
+		evt->second = mode;
+	}
+
+// Add this socket to the list of monitored sockets.
+	watch_list_.emplace_front (std::weak_ptr<FileDescriptorWatcher> (controller->weak_factory_));
+
+// Transfer ownership of evt to controller.
+	controller->Init(evt.release());
 
 	controller->set_watcher (delegate);
 	controller->set_pump (this);
@@ -581,23 +598,53 @@ LOG(INFO) << "watch: " << fd;
 	return true;
 }
 
+struct NullDeleter {template<typename T> void operator()(T*) {} };
+
 kigoron::provider_t::FileDescriptorWatcher::FileDescriptorWatcher()
-	: pump_ (nullptr)
+	: event_ (nullptr)
+	, pump_ (nullptr)
 	, watcher_ (nullptr)
+	, weak_factory_ (this, NullDeleter())
 {
 }
 
 kigoron::provider_t::FileDescriptorWatcher::~FileDescriptorWatcher()
 {
+	if (nullptr != event_) {
+		StopWatchingFileDescriptor();
+	}
 }
 
 bool
 kigoron::provider_t::FileDescriptorWatcher::StopWatchingFileDescriptor()
 {
-	auto rv = pump_->watch_list_.erase (this);
+	event* e = ReleaseEvent();
+	if (nullptr == e) {
+		return true;
+	}
+
+	FD_CLR (e->first, &pump_->in_rfds_);
+	delete e;
 	pump_ = nullptr;
 	watcher_ = nullptr;
-	return (rv == 1);
+	return true;
+}
+
+void
+kigoron::provider_t::FileDescriptorWatcher::Init (kigoron::provider_t::FileDescriptorWatcher::event *e)
+{
+	DCHECK(e);
+	DCHECK(!event_);
+
+	event_ = e;
+}
+
+kigoron::provider_t::FileDescriptorWatcher::event*
+kigoron::provider_t::FileDescriptorWatcher::ReleaseEvent()
+{
+	FileDescriptorWatcher::event *e = event_;
+	event_ = nullptr;
+	return e;
 }
 
 void
