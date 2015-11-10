@@ -11,9 +11,9 @@
 #endif
 
 #ifdef ENABLE_LEAK_TRACKER
-#include "stack_trace.hh"
-#include "../linked_list.hh"
-#include "../logging.hh"
+#include "chromium/containers/linked_list.hh"
+#include "chromium/debug/stack_trace.hh"
+#include "chromium/logging.hh"
 #endif  // ENABLE_LEAK_TRACKER
 
 // LeakTracker is a helper to verify that all instances of a class

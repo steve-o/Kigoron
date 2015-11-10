@@ -4,15 +4,8 @@
 
 #ifndef CHROMIUM_LOGGING_HH__
 #define CHROMIUM_LOGGING_HH__
-#pragma once
 
 #include <sstream>
-
-/* Boost noncopyable base class */
-#include <boost/utility.hpp>
-
-/* Boost current function macro */
-#include <boost/current_function.hpp>
 
 /* Instructions
  * ------------
@@ -522,11 +515,10 @@ inline bool InitLogging(const char* log_file,
  * though.  You should use the LOG() macro (and variants thereof)
  * above.
  */
-	class LogMessage :
-		boost::noncopyable
+	class LogMessage
 	{
 	public:
-		LogMessage (const char* file, int line, LogSeverity severity, int ctr);
+		explicit LogMessage (const char* file, int line, LogSeverity severity, int ctr);
 
 /* Two special constructors that generate reduced amounts of code at
  * LOG call sites for common cases.
@@ -537,7 +529,7 @@ inline bool InitLogging(const char* log_file,
  * Using this constructor instead of the more complex constructor above
  * saves a couple of bytes per call site.
  */
-		LogMessage (const char* file_, int line_);
+		explicit LogMessage (const char* file_, int line_);
 
 /* Used for LOG(severity) where severity != INFO.  Implied
  * are: ctr = 0
@@ -545,18 +537,18 @@ inline bool InitLogging(const char* log_file,
  * Using this constructor instead of the more complex constructor above
  * saves a couple of bytes per call site.
  */
-		LogMessage (const char* file, int line, LogSeverity severity);
+		explicit LogMessage (const char* file, int line, LogSeverity severity);
 
 /* A special constructor used for check failures.  Takes ownership
  * of the given string.
  * Implied severity = LOG_FATAL
  */
-		LogMessage (const char* file, int line, std::string* result);
+		explicit LogMessage (const char* file, int line, std::string* result);
 
 /* A special constructor used for check failures, with the option to
  * specify severity.  Takes ownership of the given string.
  */
-		LogMessage (const char* file, int line, LogSeverity severity, std::string* result);
+		explicit LogMessage (const char* file, int line, LogSeverity severity, std::string* result);
 
 		~LogMessage();
 

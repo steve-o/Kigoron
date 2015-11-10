@@ -9,7 +9,7 @@
 #include <windows.h>
 
 #include "chromium/logging.hh"
-#include "chromium/string_piece.hh"
+#include "chromium/strings/string_piece.hh"
 #include "upaostream.hh"
 #include "provider.hh"
 

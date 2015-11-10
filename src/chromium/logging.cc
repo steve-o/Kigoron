@@ -5,7 +5,7 @@
  * Copyright (c) 2011 The Chromium Authors. All rights reserved.
  */
 
-#include "logging.hh"
+#include "chromium/logging.hh"
 
 #define NOMINMAX
 #include <winsock2.h>
@@ -15,11 +15,11 @@
 #include <ctime>
 #include <iomanip>
 
-#include "chromium_switches.hh"
-#include "command_line.hh"
-#include "debug/stack_trace.hh"
-#include "synchronization/lock_impl.hh"
-#include "vlog.hh"
+#include "chromium/chromium_switches.hh"
+#include "chromium/command_line.hh"
+#include "chromium/debug/stack_trace.hh"
+#include "chromium/synchronization/lock_impl.hh"
+#include "chromium/vlog.hh"
 
 namespace logging {
 

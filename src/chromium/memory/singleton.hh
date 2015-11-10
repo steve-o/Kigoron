@@ -18,9 +18,8 @@
 
 #ifndef CHROMIUM_MEMORY_SINGLETON_HH__
 #define CHROMIUM_MEMORY_SINGLETON_HH__
-#pragma once
 
-#include "../atomicops.hh"
+#include "chromium/atomicops.hh"
 
 namespace chromium {
 namespace internal {

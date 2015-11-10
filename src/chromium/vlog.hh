@@ -4,22 +4,17 @@
 
 #ifndef CHROMIUM_VLOG_HH__
 #define CHROMIUM_VLOG_HH__
-#pragma once
 
 #include <cstddef>
 #include <string>
 #include <vector>
 
-/* Boost noncopyable base class */
-#include <boost/utility.hpp>
-
-#include "string_piece.hh"
+#include "chromium/strings/string_piece.hh"
 
 namespace logging {
 
 // A helper class containing all the settings for vlogging.
-class VlogInfo :
-	boost::noncopyable
+class VlogInfo
 {
  public:
   static const int kDefaultVlogLevel;
@@ -42,7 +37,7 @@ class VlogInfo :
   // against the whole pathname and not just the module.  E.g.,
   // "*/foo/bar/*=2" would change the logging level for all code in
   // source files under a "foo/bar" directory.
-  VlogInfo(const std::string& v_switch,
+  explicit VlogInfo(const std::string& v_switch,
            const std::string& vmodule_switch,
            int* min_log_level);
   ~VlogInfo();

@@ -13,6 +13,7 @@
 #include "chromium/logging.hh"
 #include "upaostream.hh"
 #include "client.hh"
+#include "kigoron_http_server.hh"
 
 /* Reuters Wire Format nomenclature for RDM dictionary names. */
 static const std::string kRdmFieldDictionaryName ("RWFFld");
@@ -111,6 +112,13 @@ kigoron::provider_t::Initialize()
 		rssl_sock_ = s;
 	}
 
+/* temporary race condition setting selector */
+	FD_ZERO (&in_rfds_);
+/* Built in HTTPD server. */
+	server_.reset (new KigoronHttpServer (this));
+	if (!(bool)server_ || !server_->Start (7580))
+		return false;
+
 	return true;
 }
 
@@ -205,6 +213,9 @@ kigoron::provider_t::Close()
 	}
 /* 5) Cleanup */
 	clients_.clear();
+
+/* Drop http port. */
+	server_.reset();
 
 /* Closing listening socket. */
 	if (nullptr != rssl_sock_) {
@@ -375,6 +386,17 @@ kigoron::provider_t::Run()
 	in_tv_.tv_sec = 0;
 	in_tv_.tv_usec = 1000 * 100;	// 100ms timeout
 
+/* reset any Chromium sockets that are lost from selector */
+	for (auto it = watch_list_.begin();
+		it != watch_list_.end();
+		++it)
+	{
+		if (auto sp = it->lock()) {
+			net::SocketDescriptor fd = sp->event_->first;
+			FD_SET (fd, &in_rfds_);
+		}
+	}
+
 	for (;;) {
 		bool did_work = DoWork();
 
@@ -506,7 +528,144 @@ kigoron::provider_t::DoWork()
 			++it;
 		}
 	}
+
+/* Chromium sockets, exceptions are ignored. */
+	for (auto it = watch_list_.begin();
+		it != watch_list_.end();)
+	{
+		if (auto sp = it->lock()) {
+			FileDescriptorWatcher* controller = sp.get();
+			net::SocketDescriptor fd = controller->event_->first;
+			if (FD_ISSET (fd, &out_rfds_)) {
+				FD_CLR (fd, &out_rfds_);
+				controller->OnFileCanReadWithoutBlocking (fd, this);
+				did_work = true;
+			}
+			if (FD_ISSET (fd, &out_wfds_)) {
+				FD_CLR (fd, &out_wfds_);
+				controller->OnFileCanWriteWithoutBlocking (fd, this);
+				did_work = true;
+			}
+			++it;
+		} else {
+			auto jt = it++;
+			watch_list_.erase (jt);
+		}
+	}
+
 	return did_work;
+}
+
+/* Add a Chromium socket to the message loop monitoring pool */
+bool
+kigoron::provider_t::WatchFileDescriptor (
+	net::SocketDescriptor fd,
+	bool persistent,
+	kigoron::provider_t::Mode mode,
+	kigoron::provider_t::FileDescriptorWatcher* controller,
+	kigoron::provider_t::Watcher* delegate
+	)
+{
+	DCHECK_GE(fd, 0);
+	DCHECK(controller);
+	DCHECK(delegate);
+	DCHECK(mode == WATCH_READ || mode == WATCH_WRITE || mode == WATCH_READ_WRITE);
+
+	if (mode & WATCH_READ) {
+		FD_SET (fd, &in_rfds_);
+	}
+	if (mode & WATCH_WRITE) {
+		FD_SET (fd, &in_wfds_);
+	}
+
+	std::unique_ptr<FileDescriptorWatcher::event> evt (controller->ReleaseEvent());
+	if (!(bool)evt) {
+		evt.reset (new FileDescriptorWatcher::event (fd, mode));
+	} else {
+		evt->first = fd;
+		evt->second = mode;
+	}
+
+// Add this socket to the list of monitored sockets.
+	watch_list_.emplace_front (std::weak_ptr<FileDescriptorWatcher> (controller->weak_factory_));
+
+// Transfer ownership of evt to controller.
+	controller->Init(evt.release());
+
+	controller->set_watcher (delegate);
+	controller->set_pump (this);
+
+	return true;
+}
+
+struct NullDeleter {template<typename T> void operator()(T*) {} };
+
+kigoron::provider_t::FileDescriptorWatcher::FileDescriptorWatcher()
+	: event_ (nullptr)
+	, pump_ (nullptr)
+	, watcher_ (nullptr)
+	, weak_factory_ (this, NullDeleter())
+{
+}
+
+kigoron::provider_t::FileDescriptorWatcher::~FileDescriptorWatcher()
+{
+	if (nullptr != event_) {
+		StopWatchingFileDescriptor();
+	}
+}
+
+bool
+kigoron::provider_t::FileDescriptorWatcher::StopWatchingFileDescriptor()
+{
+	event* e = ReleaseEvent();
+	if (nullptr == e) {
+		return true;
+	}
+
+	FD_CLR (e->first, &pump_->in_rfds_);
+	delete e;
+	pump_ = nullptr;
+	watcher_ = nullptr;
+	return true;
+}
+
+void
+kigoron::provider_t::FileDescriptorWatcher::Init (kigoron::provider_t::FileDescriptorWatcher::event *e)
+{
+	DCHECK(e);
+	DCHECK(!event_);
+
+	event_ = e;
+}
+
+kigoron::provider_t::FileDescriptorWatcher::event*
+kigoron::provider_t::FileDescriptorWatcher::ReleaseEvent()
+{
+	FileDescriptorWatcher::event *e = event_;
+	event_ = nullptr;
+	return e;
+}
+
+void
+kigoron::provider_t::FileDescriptorWatcher::OnFileCanReadWithoutBlocking (
+	net::SocketDescriptor fd,
+	kigoron::provider_t* pump
+	)
+{
+	if (!watcher_)
+		return;
+	watcher_->OnFileCanReadWithoutBlocking (fd);
+}
+
+void
+kigoron::provider_t::FileDescriptorWatcher::OnFileCanWriteWithoutBlocking (
+	net::SocketDescriptor fd,
+	kigoron::provider_t* pump
+	)
+{
+	DCHECK(watcher_);
+	watcher_->OnFileCanWriteWithoutBlocking (fd);
 }
 
 void

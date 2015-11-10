@@ -25,11 +25,12 @@
 #include <upa/upa.h>
 
 #include "chromium/debug/leak_tracker.hh"
-#include "chromium/string_piece.hh"
+#include "chromium/strings/string_piece.hh"
+#include "net/socket/socket_descriptor.hh"
 #include "upa.hh"
-#include "client.hh"
 #include "config.hh"
 #include "deleter.hh"
+#include "client.hh"
 
 namespace kigoron
 {
@@ -75,12 +76,72 @@ namespace kigoron
 		PROVIDER_PC_MAX
 	};
 
-	class client_t;
+	class KigoronHttpServer;
 
 	class provider_t :
 		public std::enable_shared_from_this<provider_t>
 	{
 	public:
+// Used with WatchFileDescriptor to asynchronously monitor the I/O readiness
+// of a file descriptor.
+		class Watcher {
+		public:
+// Called from MessageLoop::Run when an FD can be read from/written to
+// without blocking
+			virtual void OnFileCanReadWithoutBlocking(net::SocketDescriptor fd) = 0;
+			virtual void OnFileCanWriteWithoutBlocking(net::SocketDescriptor fd) = 0;
+
+		protected:
+			virtual ~Watcher() {}
+		};
+
+		enum Mode;
+
+// Object returned by WatchFileDescriptor to manage further watching.
+		class FileDescriptorWatcher {
+		public:
+			explicit FileDescriptorWatcher();
+			~FileDescriptorWatcher();  // Implicitly calls StopWatchingFileDescriptor.
+
+// Stop watching the FD, always safe to call.  No-op if there's nothing
+// to do.
+			bool StopWatchingFileDescriptor();
+
+		private:
+			friend class provider_t;
+
+			typedef std::pair<net::SocketDescriptor, Mode> event;
+
+// Called by MessagePumpLibevent, ownership of |e| is transferred to this
+// object.
+			void Init(event* e);
+
+// Used by MessagePumpLibevent to take ownership of event_.
+			event* ReleaseEvent();
+
+			void set_pump(provider_t* pump) { pump_ = pump; }
+			provider_t* pump() const { return pump_; }
+
+			void set_watcher(Watcher* watcher) { watcher_ = watcher; }
+
+			void OnFileCanReadWithoutBlocking(net::SocketDescriptor fd, provider_t* pump);
+			void OnFileCanWriteWithoutBlocking(net::SocketDescriptor fd, provider_t* pump);
+
+/* pretend fd is a libevent event object */
+			event* event_;
+			Watcher* watcher_;
+			provider_t* pump_;
+			std::shared_ptr<FileDescriptorWatcher> weak_factory_;
+		};
+
+		enum Mode {
+			WATCH_READ = 1 << 0,
+			WATCH_WRITE = 1 << 1,
+			WATCH_READ_WRITE = WATCH_READ | WATCH_WRITE
+		};
+
+		bool WatchFileDescriptor (net::SocketDescriptor fd, bool persistent, Mode mode, FileDescriptorWatcher* controller, Watcher* delegate);
+
 		explicit provider_t (const config_t& config, std::shared_ptr<upa_t> upa, client_t::Delegate* request_delegate);
 		~provider_t();
 
@@ -161,6 +222,9 @@ namespace kigoron
 		std::shared_ptr<upa_t> upa_;
 /* Server socket for new connections */
 		RsslServer* rssl_sock_;
+/* Built in HTTP server. */
+		std::shared_ptr<KigoronHttpServer> server_;
+		std::list<std::weak_ptr<FileDescriptorWatcher>> watch_list_;
 /* This flag is set to false when Run should return. */
 		boost::atomic_bool keep_running_;
 
@@ -178,6 +242,7 @@ namespace kigoron
 
 		client_t::Delegate* request_delegate_;
 		friend client_t;
+		friend KigoronHttpServer;
 
 /* Reuters Wire Format versions. */
 		boost::atomic_uint16_t min_rwf_version_;

@@ -27,7 +27,6 @@
 
 #ifndef CHROMIUM_ATOMICOPS_HH__
 #define CHROMIUM_ATOMICOPS_HH__
-#pragma once
 
 #include <cstdint>
 
@@ -118,7 +117,7 @@ Atomic64 Release_Load(volatile const Atomic64* ptr);
 }  // namespace chromium
 
 // Include our platform specific implementation.
-#include "atomicops_internals_x86_msvc.hh"
+#include "chromium/atomicops_internals_x86_msvc.hh"
 
 #endif  // CHROMIUM_ATOMICOPS_HH__
 

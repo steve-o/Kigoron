@@ -2,16 +2,16 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "stack_trace.hh"
+#include "chromium/debug/stack_trace.hh"
 
 #include <windows.h>
 #include <dbghelp.h>
 
 #include <iostream>
 
-#include "../logging.hh"
-#include "../memory/singleton.hh"
-#include "../synchronization/lock.hh"
+#include "chromium/logging.hh"
+#include "chromium/memory/singleton.hh"
+#include "chromium/synchronization/lock.hh"
 
 namespace chromium {
 namespace debug {

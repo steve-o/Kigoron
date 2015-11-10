@@ -7,8 +7,6 @@
 #ifndef CHROMIUM_BASE_SWITCHES_HH__
 #define CHROMIUM_BASE_SWITCHES_HH__
 
-#pragma once
-
 namespace switches {
 
 extern const char kEnableDCHECK[];

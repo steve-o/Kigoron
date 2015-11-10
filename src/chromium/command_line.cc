@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "command_line.hh"
+#include "chromium/command_line.hh"
 
 #include <algorithm>
 #include <ostream>
 
-#include "logging.hh"
-#include "string_split.hh"
-#include "string_util.hh"
+#include "chromium/logging.hh"
+#include "chromium/strings/string_split.hh"
+#include "chromium/strings/string_util.hh"
 
 CommandLine* CommandLine::current_process_commandline_ = NULL;
 
@@ -52,7 +52,7 @@ void AppendSwitchesAndArguments(CommandLine& command_line,
   bool parse_switches = true;
   for (size_t i = 1; i < argv.size(); ++i) {
     CommandLine::StringType arg = argv[i];
-    TrimWhitespace(arg, TRIM_ALL, &arg);
+    chromium::TrimWhitespace(arg, chromium::TRIM_ALL, &arg);
 
     CommandLine::StringType switch_string;
     CommandLine::StringType switch_value;
@@ -250,7 +250,7 @@ void CommandLine::PrependWrapper(const CommandLine::StringType& wrapper) {
 
 void CommandLine::ParseFromString(const std::string& command_line) {
   std::string command_line_string;
-  TrimWhitespace(command_line, TRIM_ALL, &command_line_string);
+  chromium::TrimWhitespace(command_line, chromium::TRIM_ALL, &command_line_string);
   if (command_line_string.empty())
     return;
 

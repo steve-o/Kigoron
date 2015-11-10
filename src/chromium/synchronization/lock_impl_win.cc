@@ -5,7 +5,7 @@
  * Copyright (c) 2011 The Chromium Authors. All rights reserved.
  */
 
-#include "lock_impl.hh"
+#include "chromium/synchronization/lock_impl.hh"
 
 namespace chromium {
 namespace internal {
