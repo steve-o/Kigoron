@@ -16,6 +16,7 @@
 namespace {
 
 #include "index.html.h"
+#include "poll.js.h"
 
 }  // namespace
 
@@ -86,6 +87,10 @@ kigoron::KigoronHttpServer::OnHttpRequest (
 
 	if (info.path == "" || info.path == "/") {
 		OnDiscoveryPageRequestUI (connection_id);
+		return;
+	}
+	if (info.path == "/poll.js") {
+		OnPollScriptRequestUI (connection_id);
 		return;
 	}
 
@@ -206,6 +211,15 @@ kigoron::KigoronHttpServer::OnDiscoveryPageRequestUI (
 }
 
 void
+kigoron::KigoronHttpServer::OnPollScriptRequestUI (
+	int connection_id
+	)
+{
+	std::string response = GetPollScriptJS();
+	server_->Send200(connection_id, response, "application/json; charset=UTF-8");
+}
+
+void
 kigoron::KigoronHttpServer::SendJson (
 	int connection_id,
 	net::HttpStatusCode status_code,
@@ -244,6 +258,12 @@ kigoron::KigoronHttpServer::GetDiscoveryPageHTML() const
 	ReplaceFirstSubstringAfterOffset (&response, 0, "%CLIENTS%", std::to_string (info.clients.size()));
 
 	return response;
+}
+
+std::string
+kigoron::KigoronHttpServer::GetPollScriptJS() const
+{
+	return std::string (WWW_POLL_JS);
 }
 
 /* eof */

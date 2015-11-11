@@ -216,9 +216,16 @@ add_custom_command(
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/htdocs/index.html
 )
+add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/poll.js.h
+	COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/convert_to_macro.pl ${CMAKE_CURRENT_SOURCE_DIR}/htdocs/poll.js > ${CMAKE_CURRENT_BINARY_DIR}/poll.js.h
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/htdocs/poll.js
+)
 
 set(generated-sources
 	${CMAKE_CURRENT_BINARY_DIR}/index.html.h
+	${CMAKE_CURRENT_BINARY_DIR}/poll.js.h
 )
 
 #-----------------------------------------------------------------------------

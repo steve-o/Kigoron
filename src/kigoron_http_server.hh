@@ -71,10 +71,12 @@ namespace kigoron
 
 		void OnJsonRequestUI(int connection_id, const net::HttpServerRequestInfo& info);
 		void OnDiscoveryPageRequestUI(int connection_id);
+		void OnPollScriptRequestUI(int connection_id);
 
 		void SendJson(int connection_id, net::HttpStatusCode status_code, chromium::Value* value, const std::string& message);
 
 		std::string GetDiscoveryPageHTML() const;
+		std::string GetPollScriptJS() const;
 
 // Port for listening.
 		in_port_t port_;
