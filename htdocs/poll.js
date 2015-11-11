@@ -2,14 +2,12 @@ var sock = undefined;
 var poll_id = undefined, retry_id = undefined;
 var sock_onopen = function() {
 	document.getElementById("status").textContent = "connected";
-	poll_id = window.setInterval(function() {
-		sock.send("!");
-	}, 100);
+	sock_poll();
 };
 var sock_onclose = function(e) {
 	document.getElementById("status").textContent = "disconnected";
 	if (typeof poll_id === "number") {
-		window.clearInterval(poll_id);
+		window.clearTimeout(poll_id);
 		poll_id = undefined;
 	}
 	if (!e.wasClean) {
@@ -18,12 +16,23 @@ var sock_onclose = function(e) {
 		}, 1000);
 	}
 };
+var sock_poll = function() {
+	poll_id = window.setTimeout(function() {
+		if (sock.readyState == WebSocket.OPEN) {
+			sock.send("!");
+		}
+	}, 100);
+}
+var sock_onerror = function(e) {
+	console.error(e);
+}
 var sock_onmessage = function(e) {
 	var msg = JSON.parse(e.data);
 	document.getElementById("hostname").textContent = msg.hostname;
 	document.getElementById("username").textContent = msg.username;
 	document.getElementById("pid").textContent = msg.pid;
 	document.getElementById("clients").textContent = msg.clients;
+	sock_poll();
 };
 var sock_connect = function() {
 	new_sock = new WebSocket("ws://" + window.location.host + "/ws");
