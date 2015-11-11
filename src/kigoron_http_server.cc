@@ -126,13 +126,67 @@ kigoron::KigoronHttpServer::OnClose (
 {
 }
 
+static bool ParseJsonPath(
+    const std::string& path,
+    std::string* command,
+    std::string* target_id) {
+  // Fall back to list in case of empty query.
+  if (path.empty()) {
+    *command = "list";
+    return true;
+  }
+  if (path.find("/") != 0) {
+    // Malformed command.
+    return false;
+  }
+  *command = path.substr(1);
+  size_t separator_pos = command->find("/");
+  if (separator_pos != std::string::npos) {
+    *target_id = command->substr(separator_pos + 1);
+    *command = command->substr(0, separator_pos);
+  }
+  return true;
+}
+
 void
 kigoron::KigoronHttpServer::OnJsonRequestUI (
 	int connection_id,
 	const net::HttpServerRequestInfo& info
 	)
 {
-	SendJson(connection_id, net::HTTP_NOT_FOUND, nullptr, "Unknown command");
+// Trim /json
+	std::string path = info.path.substr(5);
+
+// Trim fragment and query
+	std::string query;
+	size_t query_pos = path.find("?");
+	if (query_pos != std::string::npos) {
+		query = path.substr(query_pos + 1);
+		path = path.substr(0, query_pos);
+	}
+	size_t fragment_pos = path.find("#");
+	if (fragment_pos != std::string::npos)
+		path = path.substr(0, fragment_pos);
+
+	std::string command;
+	std::string target_id;
+	if (!ParseJsonPath(path, &command, &target_id)) {
+		SendJson(connection_id, net::HTTP_NOT_FOUND, nullptr, "Malformed query: " + info.path);
+		return;
+	}
+
+	if ("info" == command) {
+		chromium::DictionaryValue dict;
+		ProviderInfo info;
+		delegate_->CreateInfo (&info);
+		dict.SetString("hostname", info.hostname);
+		dict.SetString("username", info.username);
+		dict.SetInteger("pid", info.pid);
+		dict.SetInteger("clients", info.clients.size());
+		SendJson(connection_id, net::HTTP_OK, &dict, std::string());
+	}
+
+	SendJson(connection_id, net::HTTP_NOT_FOUND, nullptr, "Unknown command: " + command);
 }
 
 void
