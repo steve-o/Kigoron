@@ -110,13 +110,18 @@ kigoron::KigoronHttpServer::OnWebSocketMessage (
 	const std::string& data
 	)
 {
-	std::stringstream ss;
+	std::string response;
 
+	std::shared_ptr<chromium::DictionaryValue> dict(new chromium::DictionaryValue);
 	ProviderInfo info;
 	delegate_->CreateInfo (&info);
+	dict->SetString("hostname", info.hostname);
+	dict->SetString("username", info.username);
+	dict->SetInteger("pid", info.pid);
+	dict->SetInteger("clients", info.clients.size());
+	chromium::JSONWriter::Write(dict.get(), &response);
 
-	ss << info.clients.size();
-	server_->SendOverWebSocket(connection_id, ss.str());
+	server_->SendOverWebSocket(connection_id, response);
 }
 
 void
@@ -249,8 +254,12 @@ kigoron::KigoronHttpServer::GetDiscoveryPageHTML() const
 						"id = undefined;"
 					"}"
 				"};"
-				"sock.onmessage = function(msg) {"
-					"document.getElementById(\"clients\").textContent = msg.data;"
+				"sock.onmessage = function(e) {"
+					"var msg = JSON.parse(e.data);"
+					"document.getElementById(\"hostname\").textContent = msg.hostname;"
+					"document.getElementById(\"username\").textContent = msg.username;"
+					"document.getElementById(\"pid\").textContent = msg.pid;"
+					"document.getElementById(\"clients\").textContent = msg.clients;"
 				"};"
 				"document.addEventListener(\"visibilitychange\", function() {"
 					"switch (document.visibilityState) {"
@@ -271,11 +280,11 @@ kigoron::KigoronHttpServer::GetDiscoveryPageHTML() const
 		"<body>"
 		"<table>"
 		"<tr>"
-			"<th>host name:</th><td>" << info.hostname << "</td>"
+			"<th>host name:</th><td id=\"hostname\">" << info.hostname << "</td>"
 		"</tr><tr>"
-			"<th>user name:</th><td>" << info.username << "</td>"
+			"<th>user name:</th><td id=\"username\">" << info.username << "</td>"
 		"</tr><tr>"
-			"<th>process ID:</th><td>" << info.pid << "</td>"
+			"<th>process ID:</th><td id=\"pid\">" << info.pid << "</td>"
 		"</tr><tr>"
 			"<th>clients:</th><td id=\"clients\"></td>"
 		"</tr>"
