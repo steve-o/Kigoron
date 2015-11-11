@@ -11,17 +11,25 @@ var sock_onclose = function(e) {
 		poll_id = undefined;
 	}
 	if (!e.wasClean) {
+		var timeout = 1000;
+		if (document.hasFocus()) {
+			timeout *= 2;
+		}
 		retry_id = window.setTimeout(function() {
 			sock = sock_connect();
-		}, 1000);
+		}, timeout);
 	}
 };
 var sock_poll = function() {
+	var timeout = 100;
+	if (document.hasFocus()) {
+		timeout *= 2;
+	}
 	poll_id = window.setTimeout(function() {
 		if (sock.readyState == WebSocket.OPEN) {
 			sock.send("!");
 		}
-	}, 100);
+	}, timeout);
 }
 var sock_onerror = function(e) {
 	console.error(e);
