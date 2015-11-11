@@ -12,7 +12,7 @@ var sock_onclose = function(e) {
 	}
 	if (!e.wasClean) {
 		var timeout = 1000;
-		if (document.hasFocus()) {
+		if (!document.hasFocus()) {
 			timeout *= 2;
 		}
 		retry_id = window.setTimeout(function() {
@@ -22,7 +22,7 @@ var sock_onclose = function(e) {
 };
 var sock_poll = function() {
 	var timeout = 100;
-	if (document.hasFocus()) {
+	if (!document.hasFocus()) {
 		timeout *= 2;
 	}
 	poll_id = window.setTimeout(function() {
