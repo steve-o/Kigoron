@@ -208,9 +208,23 @@ link_directories(
 )
 
 #-----------------------------------------------------------------------------
+# source generators
+
+add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/index.html.h
+	COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/convert_to_macro.pl ${CMAKE_CURRENT_SOURCE_DIR}/htdocs/index.html > ${CMAKE_CURRENT_BINARY_DIR}/index.html.h
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/htdocs/index.html
+)
+
+set(generated-sources
+	${CMAKE_CURRENT_BINARY_DIR}/index.html.h
+)
+
+#-----------------------------------------------------------------------------
 # output
 
-add_executable(Kigoron ${cxx-sources})
+add_executable(Kigoron ${cxx-sources} ${generated-sources})
 
 target_link_libraries(Kigoron
 	${UPA_LIBRARIES}

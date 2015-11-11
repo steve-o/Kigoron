@@ -15,6 +15,8 @@
 
 namespace {
 
+#include "index.html.h"
+
 }  // namespace
 
 kigoron::ProviderInfo::ProviderInfo() : pid(0) {
@@ -227,73 +229,21 @@ kigoron::KigoronHttpServer::SendJson (
 	server_->SendResponse(connection_id, response);
 }
 
+#include "chromium/strings/string_util.hh"
+
 std::string
 kigoron::KigoronHttpServer::GetDiscoveryPageHTML() const
 {
-	std::stringstream ss;
-
 	ProviderInfo info;
 	delegate_->CreateInfo (&info);
-	
-	ss   << "<!DOCTYPE html>"
-		"<html>"
-		"<head>"
-			"<meta charset=\"UTF-8\">"
-			"<script type=\"text/javascript\">"
-			"(function() {"
-				"var sock = new WebSocket(\"ws://\" + window.location.host + \"/ws\");"
-				"var id = undefined;"
-				"sock.onopen = function() {"
-					"id = window.setInterval(function() {"
-						"sock.send(\"!\");"
-					"}, 100);"
-				"};"
-				"sock.onclose = function() {"
-					"if (typeof id === \"number\") {"
-						"window.clearInterval(id);"
-						"id = undefined;"
-					"}"
-				"};"
-				"sock.onmessage = function(e) {"
-					"var msg = JSON.parse(e.data);"
-					"document.getElementById(\"hostname\").textContent = msg.hostname;"
-					"document.getElementById(\"username\").textContent = msg.username;"
-					"document.getElementById(\"pid\").textContent = msg.pid;"
-					"document.getElementById(\"clients\").textContent = msg.clients;"
-				"};"
-				"document.addEventListener(\"visibilitychange\", function() {"
-					"switch (document.visibilityState) {"
-					"case \"hidden\":"
-					"case \"unloaded\":"
-						"sock.onclose();"
-						"break;"
-					"case \"visible\":"
-						"if (id === undefined && sock.readyState == WebSocket.OPEN) {"
-							"sock.onopen();"
-						"}"
-						"break;"
-					"}"
-				"});"
-			"})();"
-			"</script>"
-		"</head>"
-		"<body>"
-		"<table>"
-		"<tr>"
-			"<th>host name:</th><td id=\"hostname\">" << info.hostname << "</td>"
-		"</tr><tr>"
-			"<th>user name:</th><td id=\"username\">" << info.username << "</td>"
-		"</tr><tr>"
-			"<th>process ID:</th><td id=\"pid\">" << info.pid << "</td>"
-		"</tr><tr>"
-			"<th>clients:</th><td id=\"clients\"></td>"
-		"</tr>"
-		"</table>"
-		"</body>"
-		"</html>"
-		"\n";
 
-	return ss.str();
+	std::string response (WWW_INDEX_HTML);
+	ReplaceFirstSubstringAfterOffset (&response, 0, "%HOSTNAME%", info.hostname);
+	ReplaceFirstSubstringAfterOffset (&response, 0, "%USERNAME%", info.username);
+	ReplaceFirstSubstringAfterOffset (&response, 0, "%PID%", std::to_string (info.pid));
+	ReplaceFirstSubstringAfterOffset (&response, 0, "%CLIENTS%", std::to_string (info.clients.size()));
+
+	return response;
 }
 
 /* eof */
