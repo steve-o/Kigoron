@@ -3,24 +3,17 @@
 
 #include "kigoron_http_server.hh"
 
+#include "chromium/json/json_writer.hh"
 #include "chromium/logging.hh"
 #include "chromium/strings/stringprintf.hh"
+#include "chromium/values.hh"
 #include "net/base/ip_endpoint.hh"
 #include "net/base/net_errors.hh"
+#include "net/server/http_server_response_info.hh"
 #include "net/socket/tcp_listen_socket.hh"
 #include "url/gurl.hh"
 
 namespace {
-
-// Returns |true| if |request| should be GET method.
-bool IsGetMethod(const std::string& request) {
-  return true;
-}
-
-// Returns |true| if |request| should be POST method.
-bool IsPostMethod(const std::string& request) {
-  return false;
-}
 
 }  // namespace
 
@@ -84,15 +77,18 @@ kigoron::KigoronHttpServer::OnHttpRequest (
 	)
 {
 	VLOG(1) << "Processing HTTP request: " << info.path;
-	GURL url("http://host" + info.path);
-
-	if (!ValidateRequestMethod(connection_id, url.path(), info.method))
+	if (0 == info.path.find ("/json")) {
+		OnJsonRequestUI (connection_id, info);
 		return;
+	}
 
 	if (info.path == "" || info.path == "/") {
-		std::string response;
-		net::HttpStatusCode status_code = ProcessHttpRequest(url, info, &response);
-		server_->Send (connection_id, status_code, response, "text/html; charset=UTF-8");
+		OnDiscoveryPageRequestUI (connection_id);
+		return;
+	}
+
+	if (0 != info.path.find ("/provider/")) {
+		server_->Send404 (connection_id);
 		return;
 	}
 
@@ -131,62 +127,49 @@ kigoron::KigoronHttpServer::OnClose (
 }
 
 void
-kigoron::KigoronHttpServer::ReportInvalidMethod (
+kigoron::KigoronHttpServer::OnJsonRequestUI (
+	int connection_id,
+	const net::HttpServerRequestInfo& info
+	)
+{
+	SendJson(connection_id, net::HTTP_NOT_FOUND, nullptr, "Unknown command");
+}
+
+void
+kigoron::KigoronHttpServer::OnDiscoveryPageRequestUI (
 	int connection_id
 	)
 {
-	server_->Send(connection_id, net::HTTP_BAD_REQUEST, "Invalid method", "text/plain");
+	std::string response = GetDiscoveryPageHTML();
+	server_->Send200(connection_id, response, "text/html; charset=UTF-8");
 }
-
-bool
-kigoron::KigoronHttpServer::ValidateRequestMethod (
-	int connection_id,
-	const std::string& request,
-	const std::string& method
-	)
-{
-	DCHECK(!IsGetMethod(request) || !IsPostMethod(request));
-
-	if (!IsGetMethod(request) && !IsPostMethod(request)) {
-		server_->Send404(connection_id);
-		return false;
-	}
-
-	if ((IsGetMethod(request) && method != "GET") ||
-		(IsPostMethod(request) && method != "POST"))
-	{
-		ReportInvalidMethod(connection_id);
-		return false;
-	}
-
-	return true;
-}
-
-net::HttpStatusCode
-kigoron::KigoronHttpServer::ProcessHttpRequest (
-	const GURL& url,
-	const net::HttpServerRequestInfo& info,
-	std::string* response
-	)
-{
-	net::HttpStatusCode status_code = net::HTTP_OK;
-
-	if (info.path == "" || info.path == "/") {
-		ProcessInfo (response, &status_code);
-	} else {
-		NOTREACHED();
-	}
-
-	return status_code;
-}
-
-// Provider API methods:
 
 void
-kigoron::KigoronHttpServer::ProcessInfo (
-	std::string* response,
-	net::HttpStatusCode* status_code
-	) const
+kigoron::KigoronHttpServer::SendJson (
+	int connection_id,
+	net::HttpStatusCode status_code,
+	chromium::Value* value,
+	const std::string& message
+	)
+{
+// Serialize value and message.
+	std::string json_value;
+	if (value) {
+		chromium::JSONWriter::WriteWithOptions(value,
+			chromium::JSONWriter::OPTIONS_PRETTY_PRINT,
+			&json_value);
+	}
+	std::string json_message;
+	std::shared_ptr<chromium::Value> message_object(new chromium::StringValue(message));
+	chromium::JSONWriter::Write(message_object.get(), &json_message);
+
+	net::HttpServerResponseInfo response(status_code);
+	response.SetBody(json_value + message, "application/json; charset=UTF-8");
+	server_->SendResponse(connection_id, response);
+}
+
+std::string
+kigoron::KigoronHttpServer::GetDiscoveryPageHTML() const
 {
 	std::stringstream ss;
 
@@ -247,8 +230,7 @@ kigoron::KigoronHttpServer::ProcessInfo (
 		"</html>"
 		"\n";
 
-	response->assign (ss.str());
-	*status_code = net::HTTP_OK;
+	return ss.str();
 }
 
 /* eof */

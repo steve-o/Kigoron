@@ -69,19 +69,12 @@ namespace kigoron
 		virtual void OnWebSocketMessage(int connection_id, const std::string& data) override;
 		virtual void OnClose(int connection_id) override;
 
- // Sends error as response. Invoked when request method is invalid.
-		void ReportInvalidMethod(int connection_id);
+		void OnJsonRequestUI(int connection_id, const net::HttpServerRequestInfo& info);
+		void OnDiscoveryPageRequestUI(int connection_id);
 
-// Returns |true| if |request| should be done with correct |method|.
-// Otherwise sends |Invalid method| error.
-// Also checks support of |request| by this server.
-		bool ValidateRequestMethod(int connection_id, const std::string& request, const std::string& method);
+		void SendJson(int connection_id, net::HttpStatusCode status_code, chromium::Value* value, const std::string& message);
 
-// Processes http request after all preparations.
-		net::HttpStatusCode ProcessHttpRequest(const GURL& url, const net::HttpServerRequestInfo& info, std::string* response);
-
-// Provider API methods. Return reference to NULL if output should be empty.
-		void ProcessInfo(std::string* response, net::HttpStatusCode* status_code) const;
+		std::string GetDiscoveryPageHTML() const;
 
 // Port for listening.
 		in_port_t port_;
