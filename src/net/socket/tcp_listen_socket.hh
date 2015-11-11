@@ -11,9 +11,9 @@
 #include "net/socket/socket_descriptor.hh"
 #include "net/socket/stream_listen_socket.hh"
 
-namespace kigoron {
+namespace chromium {
 
-class provider_t;
+class MessageLoopForIO;
 
 }
 
@@ -26,7 +26,7 @@ class TCPListenSocket : public StreamListenSocket {
   // Listen on port for the specified IP address.  Use 127.0.0.1 to only
   // accept local connections.
   static std::shared_ptr<TCPListenSocket> CreateAndListen(
-      kigoron::provider_t* message_loop_for_io,
+      chromium::MessageLoopForIO* message_loop_for_io,
       const std::string& ip, int port, StreamListenSocket::Delegate* del);
 
   // Get raw TCP socket descriptor bound to ip:port.
@@ -37,7 +37,7 @@ class TCPListenSocket : public StreamListenSocket {
                                                int* port);
 
  protected:
-  explicit TCPListenSocket(kigoron::provider_t* message_loop_for_io, SocketDescriptor s, StreamListenSocket::Delegate* del);
+  explicit TCPListenSocket(chromium::MessageLoopForIO* message_loop_for_io, SocketDescriptor s, StreamListenSocket::Delegate* del);
 
   // Implements StreamListenSocket::Accept.
   virtual void Accept() override;
@@ -46,7 +46,7 @@ class TCPListenSocket : public StreamListenSocket {
 // Factory that can be used to instantiate TCPListenSocket.
 class TCPListenSocketFactory : public StreamListenSocketFactory {
  public:
-  explicit TCPListenSocketFactory(kigoron::provider_t* message_loop_for_io, const std::string& ip, int port);
+  explicit TCPListenSocketFactory(chromium::MessageLoopForIO* message_loop_for_io, const std::string& ip, int port);
   virtual ~TCPListenSocketFactory();
 
   // StreamListenSocketFactory overrides.
@@ -54,7 +54,7 @@ class TCPListenSocketFactory : public StreamListenSocketFactory {
       StreamListenSocket::Delegate* delegate) const override;
 
  private:
-  kigoron::provider_t* message_loop_for_io_;
+  chromium::MessageLoopForIO* message_loop_for_io_;
   const std::string ip_;
   const int port_;
 };

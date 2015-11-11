@@ -134,6 +134,17 @@ inline void AppendEscapedChar(UINCHAR ch,
 
 // UTF-8 functions ------------------------------------------------------------
 
+// Reads one character in UTF-8 starting at |*begin| in |str| and places
+// the decoded value into |*code_point|. If the character is valid, we will
+// return true. If invalid, we'll return false and put the
+// kUnicodeReplacementCharacter into |*code_point|.
+//
+// |*begin| will be updated to point to the last character consumed so it
+// can be incremented in a loop and will be ready for the next character.
+// (for a single-byte ASCII character, it will not be changed).
+bool ReadUTFChar(const char* str, int* begin, int length,
+                            unsigned* code_point_out);
+
 // Generic To-UTF-8 converter. This will call the given append method for each
 // character that should be appended, with the given output method. Wrappers
 // are provided below for escaped and non-escaped versions of this.
@@ -196,6 +207,30 @@ inline void AppendUTF8EscapedValue(unsigned char_value, CanonOutput* output) {
   DoAppendUTF8<CanonOutput, AppendEscapedChar>(char_value, output);
 }
 
+// UTF-16 functions -----------------------------------------------------------
+
+// Reads one character in UTF-16 starting at |*begin| in |str| and places
+// the decoded value into |*code_point|. If the character is valid, we will
+// return true. If invalid, we'll return false and put the
+// kUnicodeReplacementCharacter into |*code_point|.
+//
+// |*begin| will be updated to point to the last character consumed so it
+// can be incremented in a loop and will be ready for the next character.
+// (for a single-16-bit-word character, it will not be changed).
+bool ReadUTFChar(const char16_t* str, int* begin, int length,
+                            unsigned* code_point_out);
+
+// Equivalent to U16_APPEND_UNSAFE in ICU but uses our output method.
+inline void AppendUTF16Value(unsigned code_point,
+                             CanonOutputT<char16_t>* output) {
+  if (code_point > 0xffff) {
+    output->push_back(static_cast<char16_t>((code_point >> 10) + 0xd7c0));
+    output->push_back(static_cast<char16_t>((code_point & 0x3ff) | 0xdc00));
+  } else {
+    output->push_back(static_cast<char16_t>(code_point));
+  }
+}
+
 // Escaping functions ---------------------------------------------------------
 
 // Writes the given character to the output as UTF-8, escaped. Call this
@@ -217,6 +252,16 @@ inline void AppendUTF8EscapedValue(unsigned char_value, CanonOutput* output) {
 //
 // Assumes that ch[begin] is within range in the array, but does not assume
 // that any following characters are.
+inline bool AppendUTF8EscapedChar(const char* str, int* begin, int length,
+                                  CanonOutput* output) {
+  // ReadUTF8Char will handle invalid characters for us and give us the
+  // kUnicodeReplacementCharacter, so we don't have to do special checking
+  // after failure, just pass through the failure to the caller.
+  unsigned ch;
+  bool success = ReadUTFChar(str, begin, length, &ch);
+  AppendUTF8EscapedValue(ch, output);
+  return success;
+}
 
 // Given a '%' character at |*begin| in the string |spec|, this will decode
 // the escaped value and put it into |*unescaped_value| on success (returns
@@ -265,6 +310,19 @@ void AppendInvalidNarrowString(const char* spec, int begin, int end,
                                CanonOutput* output);
 
 // Misc canonicalization helpers ----------------------------------------------
+
+// Converts between UTF-8 and UTF-16, returning true on successful conversion.
+// The output will be appended to the given canonicalizer output (so make sure
+// it's empty if you want to replace).
+//
+// On invalid input, this will still write as much output as possible,
+// replacing the invalid characters with the "invalid character". It will
+// return false in the failure case, and the caller should not continue as
+// normal.
+bool ConvertUTF16ToUTF8(const char16_t* input, int input_len,
+                                   CanonOutput* output);
+bool ConvertUTF8ToUTF16(const char* input, int input_len,
+                                   CanonOutputT<char16_t>* output);
 
 // Applies the replacements to the given component source. The component source
 // should be pre-initialized to the "old" base. That is, all pointers will

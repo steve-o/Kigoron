@@ -8,12 +8,25 @@
 #include <algorithm>
 #include <utility>
 
-#include <windows.h>
+#ifdef _WIN32
+#	include <winsock2.h>
+#	include <Ws2tcpip.h>
+#	include <Lmcons.h>
+#	include <process.h>
+#else
+#	include <sys/types.h>
+#	include <sys/socket.h>
+#endif
 
 #include "chromium/logging.hh"
 #include "upaostream.hh"
 #include "client.hh"
 #include "kigoron_http_server.hh"
+
+#ifdef _WIN32
+#	define LOGIN_NAME_MAX	(UNLEN + 1)
+#	define getpid		_getpid
+#endif
 
 /* Reuters Wire Format nomenclature for RDM dictionary names. */
 static const std::string kRdmFieldDictionaryName ("RWFFld");
@@ -115,7 +128,7 @@ kigoron::provider_t::Initialize()
 /* temporary race condition setting selector */
 	FD_ZERO (&in_rfds_);
 /* Built in HTTPD server. */
-	server_.reset (new KigoronHttpServer (this));
+	server_.reset (new KigoronHttpServer (this, this));
 	if (!(bool)server_ || !server_->Start (7580))
 		return false;
 
@@ -372,6 +385,73 @@ kigoron::provider_t::SendReply (
 		return client->second->SendReply (token, data, length);
 	else
 		return false;
+}
+
+void
+kigoron::provider_t::CreateInfo (
+	kigoron::ProviderInfo* info
+	)
+{
+	char http_hostname[NI_MAXHOST];
+	char http_username[LOGIN_NAME_MAX + 1];
+	int rc;
+
+/* hostname */
+	rc = gethostname (http_hostname, sizeof (http_hostname));
+	if (0 != rc) {
+		const int save_errno = WSAGetLastError();
+		char errbuf[1024];
+		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
+				NULL,            /* source */
+                       		save_errno,      /* message id */
+                       		MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),      /* language id */
+                       		(LPTSTR)errbuf,
+                       		sizeof (errbuf),
+                       		NULL);           /* arguments */
+		LOG(ERROR) << "gethostname: { "
+			  "\"errno\": " << save_errno << ""
+			", \"text\": \"" << errbuf << "\""
+			" }";
+// fallback value
+		info->hostname.clear();
+	} else {
+		http_hostname[NI_MAXHOST - 1] = '\0';
+		info->hostname.assign (http_hostname);
+	}
+
+/* username */
+	wchar_t wusername[UNLEN + 1];
+	DWORD nSize = arraysize( wusername );
+	if (!GetUserNameW (wusername, &nSize)) {
+		const DWORD save_errno = GetLastError();
+		char errbuf[1024];
+		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM,
+				NULL,            /* source */
+                       		save_errno,      /* message id */
+                       		MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),      /* language id */
+                       		(LPTSTR)errbuf,
+                       		sizeof (errbuf),
+                       		NULL);           /* arguments */
+		LOG(ERROR) << "GetUserNameW: { "
+			  "\"errno\": " << save_errno << ""
+			", \"text\": \"" << errbuf << "\""
+			" }";
+// fallback value
+		info->username.clear();
+	} else {
+		WideCharToMultiByte (CP_UTF8, 0, wusername, nSize + 1, http_username, sizeof (http_username), NULL, NULL);
+		info->username.assign (http_username);
+	}
+
+/* pid */
+	info->pid = getpid();
+
+/* clients */
+	info->clients.clear();
+	info->clients.reserve (connections_.size());
+	for (auto& handle : connections_) {
+		info->clients.emplace_back (handle->clientIP);
+	}
 }
 
 void

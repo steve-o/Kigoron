@@ -10,9 +10,55 @@
 #include <cstdio>
 #include <string>
 
+#include "chromium/strings/utf_string_conversion_utils.hh"
+
 namespace url {
 
 namespace {
+
+template<typename CHAR, typename UCHAR>
+void DoAppendStringOfType(const CHAR* source, int length,
+                          SharedCharTypes type,
+                          CanonOutput* output) {
+  for (int i = 0; i < length; i++) {
+    if (static_cast<UCHAR>(source[i]) >= 0x80) {
+      // ReadChar will fill the code point with kUnicodeReplacementCharacter
+      // when the input is invalid, which is what we want.
+      unsigned code_point;
+      ReadUTFChar(source, &i, length, &code_point);
+      AppendUTF8EscapedValue(code_point, output);
+    } else {
+      // Just append the 7-bit character, possibly escaping it.
+      unsigned char uch = static_cast<unsigned char>(source[i]);
+      if (!IsCharOfType(uch, type))
+        AppendEscapedChar(uch, output);
+      else
+        output->push_back(uch);
+    }
+  }
+}
+
+// This function assumes the input values are all contained in 8-bit,
+// although it allows any type. Returns true if input is valid, false if not.
+template<typename CHAR, typename UCHAR>
+void DoAppendInvalidNarrowString(const CHAR* spec, int begin, int end,
+                                 CanonOutput* output) {
+  for (int i = begin; i < end; i++) {
+    UCHAR uch = static_cast<UCHAR>(spec[i]);
+    if (uch >= 0x80) {
+      // Handle UTF-8/16 encodings. This call will correctly handle the error
+      // case by appending the invalid character.
+      AppendUTF8EscapedChar(spec, &i, end, output);
+    } else if (uch <= ' ' || uch == 0x7f) {
+      // This function is for error handling, so we escape all control
+      // characters and spaces, but not anything else since we lack
+      // context to do something more specific.
+      AppendEscapedChar(static_cast<unsigned char>(uch), output);
+    } else {
+      output->push_back(static_cast<char>(uch));
+    }
+  }
+}
 
 // Overrides one component, see the Replacements structure for
 // what the various combionations of source pointer and component mean.
@@ -153,6 +199,67 @@ const char kCharToHexLookup[8] = {
     0,         // 0xC0 - 0xDF
     0,         // 0xE0 - 0xFF
 };
+
+const char16_t kUnicodeReplacementCharacter = 0xfffd;
+
+void AppendStringOfType(const char* source, int length,
+                        SharedCharTypes type,
+                        CanonOutput* output) {
+  DoAppendStringOfType<char, unsigned char>(source, length, type, output);
+}
+
+bool ReadUTFChar(const char* str, int* begin, int length,
+                 unsigned* code_point_out) {
+  // This depends on ints and int32s being the same thing.  If they're not, it
+  // will fail to compile.
+  // TODO(mmenke):  This should probably be fixed.
+  if (!chromium::ReadUnicodeCharacter(str, length, begin, code_point_out) ||
+      !chromium::IsValidCharacter(*code_point_out)) {
+    *code_point_out = kUnicodeReplacementCharacter;
+    return false;
+  }
+  return true;
+}
+
+bool ReadUTFChar(const char16_t* str, int* begin, int length,
+                 unsigned* code_point_out) {
+  // This depends on ints and int32s being the same thing.  If they're not, it
+  // will fail to compile.
+  // TODO(mmenke):  This should probably be fixed.
+  if (!chromium::ReadUnicodeCharacter(str, length, begin, code_point_out) ||
+      !chromium::IsValidCharacter(*code_point_out)) {
+    *code_point_out = kUnicodeReplacementCharacter;
+    return false;
+  }
+  return true;
+}
+
+void AppendInvalidNarrowString(const char* spec, int begin, int end,
+                               CanonOutput* output) {
+  DoAppendInvalidNarrowString<char, unsigned char>(spec, begin, end, output);
+}
+
+bool ConvertUTF16ToUTF8(const char16_t* input, int input_len,
+                        CanonOutput* output) {
+  bool success = true;
+  for (int i = 0; i < input_len; i++) {
+    unsigned code_point;
+    success &= ReadUTFChar(input, &i, input_len, &code_point);
+    AppendUTF8Value(code_point, output);
+  }
+  return success;
+}
+
+bool ConvertUTF8ToUTF16(const char* input, int input_len,
+                        CanonOutputT<char16_t>* output) {
+  bool success = true;
+  for (int i = 0; i < input_len; i++) {
+    unsigned code_point;
+    success &= ReadUTFChar(input, &i, input_len, &code_point);
+    AppendUTF16Value(code_point, output);
+  }
+  return success;
+}
 
 void SetupOverrideComponents(const char* base,
                              const Replacements<char>& repl,

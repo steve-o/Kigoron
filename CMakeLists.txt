@@ -146,6 +146,7 @@ set(cxx-sources
 	src/chromium/strings/string_split.cc
 	src/chromium/strings/string_util.cc
 	src/chromium/strings/stringprintf.cc
+	src/chromium/strings/utf_string_conversion_utils.cc
 	src/chromium/synchronization/lock.cc
 	src/chromium/synchronization/lock_impl_win.cc
 	src/chromium/time/time.cc
@@ -153,6 +154,7 @@ set(cxx-sources
 	src/chromium/values.cc
 	src/chromium/vlog.cc
 	src/googleurl/url_parse.cc
+	src/icu/icu_utf.cc
 	src/modp_b64/modp_b64.cc
 	src/net/base/ip_endpoint.cc
 	src/net/base/net_errors.cc
@@ -163,6 +165,7 @@ set(cxx-sources
 	src/net/http/http_status_code.cc
 	src/net/http/http_util.cc
 	src/net/server/http_connection.cc
+	src/net/server/http_server.cc
 	src/net/server/http_server_request_info.cc
 	src/net/server/http_server_response_info.cc
 	src/net/server/web_socket.cc
@@ -171,10 +174,19 @@ set(cxx-sources
 	src/net/socket/tcp_listen_socket.cc
 	src/net/io_buffer.cc
 	src/nspr/prtime.cc
+	src/url/gurl.cc
 	src/url/url_canon_etc.cc
+	src/url/url_canon_filesystemurl.cc
+	src/url/url_canon_fileurl.cc
+	src/url/url_canon_host.cc
 	src/url/url_canon_internal.cc
 	src/url/url_canon_ip.cc
+	src/url/url_canon_mailtourl.cc
+	src/url/url_canon_path.cc
+	src/url/url_canon_pathurl.cc
+	src/url/url_canon_query.cc
 	src/url/url_canon_stdstring.cc
+	src/url/url_canon_stdurl.cc
 	src/url/url_constants.cc
 	src/url/url_parse_file.cc
 	src/url/url_util.cc

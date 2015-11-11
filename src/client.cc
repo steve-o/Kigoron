@@ -30,16 +30,16 @@ kigoron::client_t::client_t (
 	Delegate* delegate, 
 	RsslChannel* handle,
 	const char* address
-	) :
-	creation_time_ (now),
-	last_activity_ (now),
-	provider_ (provider),
-	delegate_ (delegate),
-	address_ (address),
-	handle_ (handle),
-	pending_count_ (0),
-	is_logged_in_ (false),
-	login_token_ (0)
+	)
+	: creation_time_ (now)
+	, last_activity_ (now)
+	, provider_ (provider)
+	, delegate_ (delegate)
+	, address_ (address)
+	, handle_ (handle)
+	, pending_count_ (0)
+	, is_logged_in_ (false)
+	, login_token_ (0)
 {
 	ZeroMemory (cumulative_stats_, sizeof (cumulative_stats_));
 	ZeroMemory (snap_stats_, sizeof (snap_stats_));

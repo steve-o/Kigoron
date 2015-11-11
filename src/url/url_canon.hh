@@ -173,6 +173,8 @@ typedef CanonOutputT<char> CanonOutput;
 
 template<int fixed_capacity>
 class RawCanonOutput : public RawCanonOutputT<char, fixed_capacity> {};
+template<int fixed_capacity>
+class RawCanonOutputW : public RawCanonOutputT<char16_t, fixed_capacity> {};
 
 // Whitespace -----------------------------------------------------------------
 

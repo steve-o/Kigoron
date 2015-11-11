@@ -44,7 +44,7 @@ const int StreamListenSocket::kSocketError = SOCKET_ERROR;
 const int StreamListenSocket::kSocketError = -1;
 #endif
 
-StreamListenSocket::StreamListenSocket(kigoron::provider_t* message_loop_for_io,
+StreamListenSocket::StreamListenSocket(chromium::MessageLoopForIO* message_loop_for_io,
                                        SocketDescriptor s,
                                        StreamListenSocket::Delegate* del)
     : message_loop_for_io_(message_loop_for_io),
@@ -199,7 +199,7 @@ void StreamListenSocket::CloseSocket() {
 
 void StreamListenSocket::WatchSocket(WaitState state) {
   message_loop_for_io_->WatchFileDescriptor(
-      socket_, true, kigoron::provider_t::WATCH_READ, &watcher_, this);
+      socket_, true, chromium::MessageLoopForIO::WATCH_READ, &watcher_, this);
   wait_state_ = state;
 }
 

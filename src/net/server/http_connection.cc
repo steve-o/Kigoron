@@ -4,11 +4,10 @@
 
 #include "net/server/http_connection.hh"
 
+#include "net/server/http_server.hh"
 #include "net/server/http_server_response_info.hh"
 #include "net/server/web_socket.hh"
 #include "net/socket/stream_listen_socket.hh"
-
-#include "kigoron_http_server.hh"
 
 namespace net {
 
@@ -31,7 +30,7 @@ void HttpConnection::Send(const HttpServerResponseInfo& response) {
 }
 
 HttpConnection::HttpConnection (
-	kigoron::KigoronHttpServer* server,
+	HttpServer* server,
 	std::shared_ptr<StreamListenSocket> sock
 	)
 	: server_ (server)
@@ -41,7 +40,7 @@ HttpConnection::HttpConnection (
 }
 
 HttpConnection::~HttpConnection() {
-  server_->OnClose(id_);
+  server_->delegate_->OnClose(id_);
 }
 
 void HttpConnection::Shift(int num_bytes) {

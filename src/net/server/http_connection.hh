@@ -11,21 +11,15 @@
 #include "chromium/basictypes.hh"
 #include "net/http/http_status_code.hh"
 
-namespace kigoron {
-
-class KigoronHttpServer;
-
-}
-
 namespace net {
 
+class HttpServer;
 class HttpServerResponseInfo;
 class StreamListenSocket;
 class WebSocket;
 
 class HttpConnection {
  public:
-  explicit HttpConnection (kigoron::KigoronHttpServer* server, std::shared_ptr<StreamListenSocket> sock);
   ~HttpConnection();
 
   void Send(const std::string& data);
@@ -38,10 +32,12 @@ class HttpConnection {
   int id() const { return id_; }
 
  private:
-  friend class kigoron::KigoronHttpServer;
+  friend class HttpServer;
   static int last_id_;
 
-  kigoron::KigoronHttpServer* server_;
+  explicit HttpConnection (HttpServer* server, std::shared_ptr<StreamListenSocket> sock);
+
+  HttpServer* server_;
   std::shared_ptr<StreamListenSocket> socket_;
   std::shared_ptr<WebSocket> web_socket_;
   std::string recv_data_;

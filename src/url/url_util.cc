@@ -116,6 +116,79 @@ bool DoFindAndCompareScheme(const CHAR* str,
   return DoCompareSchemeComponent(spec, our_scheme, compare);
 }
 
+template<typename CHAR>
+bool DoCanonicalize(const CHAR* in_spec,
+                    int in_spec_len,
+                    bool trim_path_end,
+                    CanonOutput* output,
+                    Parsed* output_parsed) {
+  // Remove any whitespace from the middle of the relative URL, possibly
+  // copying to the new buffer.
+  RawCanonOutputT<CHAR> whitespace_buffer;
+  int spec_len;
+  const CHAR* spec = RemoveURLWhitespace(in_spec, in_spec_len,
+                                         &whitespace_buffer, &spec_len);
+
+  Parsed parsed_input;
+#ifdef WIN32
+  // For Windows, we allow things that look like absolute Windows paths to be
+  // fixed up magically to file URLs. This is done for IE compatability. For
+  // example, this will change "c:/foo" into a file URL rather than treating
+  // it as a URL with the protocol "c". It also works for UNC ("\\foo\bar.txt").
+  // There is similar logic in url_canon_relative.cc for
+  //
+  // For Max & Unix, we don't do this (the equivalent would be "/foo/bar" which
+  // has no meaning as an absolute path name. This is because browsers on Mac
+  // & Unix don't generally do this, so there is no compatibility reason for
+  // doing so.
+  if (DoesBeginUNCPath(spec, 0, spec_len, false) ||
+      DoesBeginWindowsDriveSpec(spec, 0, spec_len)) {
+    ParseFileURL(spec, spec_len, &parsed_input);
+    return CanonicalizeFileURL(spec, spec_len, parsed_input,
+                               output, output_parsed);
+  }
+#endif
+
+  Component scheme;
+  if (!ExtractScheme(spec, spec_len, &scheme))
+    return false;
+
+  // This is the parsed version of the input URL, we have to canonicalize it
+  // before storing it in our object.
+  bool success;
+  if (DoCompareSchemeComponent(spec, scheme, url::kFileScheme)) {
+    // File URLs are special.
+    ParseFileURL(spec, spec_len, &parsed_input);
+    success = CanonicalizeFileURL(spec, spec_len, parsed_input,
+                                  output, output_parsed);
+  } else if (DoCompareSchemeComponent(spec, scheme, url::kFileSystemScheme)) {
+    // Filesystem URLs are special.
+    ParseFileSystemURL(spec, spec_len, &parsed_input);
+    success = CanonicalizeFileSystemURL(spec, spec_len, parsed_input,
+                                        output,
+                                        output_parsed);
+
+  } else if (DoIsStandard(spec, scheme)) {
+    // All "normal" URLs.
+    ParseStandardURL(spec, spec_len, &parsed_input);
+    success = CanonicalizeStandardURL(spec, spec_len, parsed_input,
+                                      output, output_parsed);
+
+  } else if (DoCompareSchemeComponent(spec, scheme, url::kMailToScheme)) {
+    // Mailto are treated like a standard url with only a scheme, path, query
+    ParseMailtoURL(spec, spec_len, &parsed_input);
+    success = CanonicalizeMailtoURL(spec, spec_len, parsed_input, output,
+                                    output_parsed);
+
+  } else {
+    // "Weird" URLs like data: and javascript:
+    ParsePathURL(spec, spec_len, trim_path_end, &parsed_input);
+    success = CanonicalizePathURL(spec, spec_len, parsed_input, output,
+                                  output_parsed);
+  }
+  return success;
+}
+
 }  // namespace
 
 void Initialize() {
@@ -168,6 +241,15 @@ bool FindAndCompareScheme(const char* str,
                           const char* compare,
                           Component* found_scheme) {
   return DoFindAndCompareScheme(str, str_len, compare, found_scheme);
+}
+
+bool Canonicalize(const char* spec,
+                  int spec_len,
+                  bool trim_path_end,
+                  CanonOutput* output,
+                  Parsed* output_parsed) {
+  return DoCanonicalize(spec, spec_len, trim_path_end,
+                        output, output_parsed);
 }
 
 // Front-ends for LowerCaseEqualsASCII.

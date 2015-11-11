@@ -31,6 +31,8 @@
 #include "config.hh"
 #include "deleter.hh"
 #include "client.hh"
+#include "kigoron_http_server.hh"
+#include "message_loop.hh"
 
 namespace kigoron
 {
@@ -76,71 +78,13 @@ namespace kigoron
 		PROVIDER_PC_MAX
 	};
 
-	class KigoronHttpServer;
-
-	class provider_t :
-		public std::enable_shared_from_this<provider_t>
+	class provider_t
+		: public std::enable_shared_from_this<provider_t>
+		, public chromium::MessageLoopForIO
+		, public KigoronHttpServer::Delegate
 	{
 	public:
-// Used with WatchFileDescriptor to asynchronously monitor the I/O readiness
-// of a file descriptor.
-		class Watcher {
-		public:
-// Called from MessageLoop::Run when an FD can be read from/written to
-// without blocking
-			virtual void OnFileCanReadWithoutBlocking(net::SocketDescriptor fd) = 0;
-			virtual void OnFileCanWriteWithoutBlocking(net::SocketDescriptor fd) = 0;
-
-		protected:
-			virtual ~Watcher() {}
-		};
-
-		enum Mode;
-
-// Object returned by WatchFileDescriptor to manage further watching.
-		class FileDescriptorWatcher {
-		public:
-			explicit FileDescriptorWatcher();
-			~FileDescriptorWatcher();  // Implicitly calls StopWatchingFileDescriptor.
-
-// Stop watching the FD, always safe to call.  No-op if there's nothing
-// to do.
-			bool StopWatchingFileDescriptor();
-
-		private:
-			friend class provider_t;
-
-			typedef std::pair<net::SocketDescriptor, Mode> event;
-
-// Called by MessagePumpLibevent, ownership of |e| is transferred to this
-// object.
-			void Init(event* e);
-
-// Used by MessagePumpLibevent to take ownership of event_.
-			event* ReleaseEvent();
-
-			void set_pump(provider_t* pump) { pump_ = pump; }
-			provider_t* pump() const { return pump_; }
-
-			void set_watcher(Watcher* watcher) { watcher_ = watcher; }
-
-			void OnFileCanReadWithoutBlocking(net::SocketDescriptor fd, provider_t* pump);
-			void OnFileCanWriteWithoutBlocking(net::SocketDescriptor fd, provider_t* pump);
-
-/* pretend fd is a libevent event object */
-			event* event_;
-			Watcher* watcher_;
-			provider_t* pump_;
-			std::shared_ptr<FileDescriptorWatcher> weak_factory_;
-		};
-
-		enum Mode {
-			WATCH_READ = 1 << 0,
-			WATCH_WRITE = 1 << 1,
-			WATCH_READ_WRITE = WATCH_READ | WATCH_WRITE
-		};
-
-		bool WatchFileDescriptor (net::SocketDescriptor fd, bool persistent, Mode mode, FileDescriptorWatcher* controller, Watcher* delegate);
+		virtual bool WatchFileDescriptor (net::SocketDescriptor fd, bool persistent, Mode mode, FileDescriptorWatcher* controller, Watcher* delegate) override;
 
 		explicit provider_t (const config_t& config, std::shared_ptr<upa_t> upa, client_t::Delegate* request_delegate);
 		~provider_t();
@@ -154,6 +98,8 @@ namespace kigoron
 
 		static bool WriteRawClose (uint16_t rwf_version, int32_t token, uint16_t service_id, uint8_t model_type, const chromium::StringPiece& item_name, bool use_attribinfo_in_updates, uint8_t stream_state, uint8_t status_code, const chromium::StringPiece& status_text, void* data, size_t* length);
 		bool SendReply (RsslChannel*const handle, int32_t token, const void* buf, size_t length);
+
+		virtual void CreateInfo(ProviderInfo* info) override;
 
 		static uint8_t rwf_major_version (uint16_t rwf_version) { return rwf_version / 256; }
 		static uint8_t rwf_minor_version (uint16_t rwf_version) { return rwf_version % 256; }
@@ -242,6 +188,7 @@ namespace kigoron
 
 		client_t::Delegate* request_delegate_;
 		friend client_t;
+		friend chromium::MessageLoopForIO::FileDescriptorWatcher;
 		friend KigoronHttpServer;
 
 /* Reuters Wire Format versions. */

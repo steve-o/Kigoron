@@ -9,89 +9,90 @@
 #endif
 
 #include <string>
-#include <list>
 #include <memory>
+#include <vector>
 
-#include "net/io_buffer.hh"
-#include "net/http/http_status_code.hh"
-#include "net/server/http_connection.hh"
+#include "chromium/basictypes.hh"
+#include "chromium/values.hh"
+#include "net/server/http_server.hh"
 #include "net/server/http_server_request_info.hh"
-#include "net/server/http_server_response_info.hh"
-#include "net/socket/socket_descriptor.hh"
-#include "net/socket/stream_listen_socket.hh"
 
 #ifdef _WIN32           
 #	define in_port_t	uint16_t
-#	define ssize_t		SSIZE_T
 #endif
 
-namespace net
-{
-
-class IPEndPoint;
-class HttpConnection;
-
-}
+class GURL;
 
 namespace kigoron
 {
+// temporary integration until message loop is available.
 	class provider_t;
 
+	struct ProviderInfo {
+		ProviderInfo();
+		~ProviderInfo();
+
+		std::string hostname;
+		std::string username;
+		int pid;
+		std::vector<std::string> clients;
+	};
+
 	class KigoronHttpServer
-		: public net::StreamListenSocket::Delegate
+		: public net::HttpServer::Delegate
 	{
 	public:
-		void OnHttpRequest (int connection_id, const net::HttpServerRequestInfo& info);
-		void OnWebSocketRequest(int connection_id, const net::HttpServerRequestInfo& info);
-		void OnWebSocketMessage(int connection_id, const std::string& data);
-		void OnClose(int connection_id);
 
-		explicit KigoronHttpServer (provider_t* message_loop_for_io);
-		~KigoronHttpServer();
+		class Delegate {
+		public:
+			virtual ~Delegate() {}
 
-		void AcceptWebSocket(int connection_id, const net::HttpServerRequestInfo& request);
-		void SendOverWebSocket(int connection_id, const std::string& data);
-// Sends the provided data directly to the given connection. No validation is
-// performed that data constitutes a valid HTTP response. A valid HTTP
-// response may be split across multiple calls to SendRaw.
-		void SendRaw(int connection_id, const std::string& data);
-		void SendResponse(int connection_id, const net::HttpServerResponseInfo& response);
-		void Send(int connection_id, net::HttpStatusCode status_code, const std::string& data, const std::string& mime_type);
-		void Send200(int connection_id, const std::string& data, const std::string& mime_type);
-		void Send404(int connection_id);
-		void Send500(int connection_id, const std::string& message);
+			virtual void CreateInfo(ProviderInfo* info) = 0;
+		};
 
-		void Close(int connection_id);
+// Constructor doesn't start server.
+		explicit KigoronHttpServer (chromium::MessageLoopForIO* message_loop_for_io, Delegate* delegate);
 
-// Copies the local address to |address|. Returns a network error code.
-		int GetLocalAddress (net::IPEndPoint* address);
+// Destroys the object.
+		virtual ~KigoronHttpServer();
 
+// Starts HTTP server: start listening port |port| for HTTP requests.
 		bool Start (in_port_t port);
-		std::string GetIndexPageHTML();
 
-// ListenSocketDelegate
-		virtual void DidAccept (net::StreamListenSocket* server, std::shared_ptr<net::StreamListenSocket> socket) override;
-		virtual void DidRead (net::StreamListenSocket* socket, const char* data, int len) override;
-		virtual void DidClose (net::StreamListenSocket* socket) override;
+// Stops HTTP server.
+		void Shutdown();
 
 	private:
-		provider_t* message_loop_for_io_;
+// net::HttpServer::Delegate methods:
+		virtual void OnHttpRequest (int connection_id, const net::HttpServerRequestInfo& info) override;
+		virtual void OnWebSocketRequest(int connection_id, const net::HttpServerRequestInfo& info) override;
+		virtual void OnWebSocketMessage(int connection_id, const std::string& data) override;
+		virtual void OnClose(int connection_id) override;
 
-		friend class provider_t;
-		friend class net::HttpConnection;
-// Expects the raw data to be stored in recv_data_. If parsing is successful,
-// will remove the data parsed from recv_data_, leaving only the unused
-// recv data.
-		static bool ParseHeaders (net::HttpConnection* connection, net::HttpServerRequestInfo* info, size_t* pos);
+ // Sends error as response. Invoked when request method is invalid.
+		void ReportInvalidMethod(int connection_id);
 
-		net::HttpConnection* FindConnection(int connection_id);
-		net::HttpConnection* FindConnection(net::StreamListenSocket* socket);
+// Returns |true| if |request| should be done with correct |method|.
+// Otherwise sends |Invalid method| error.
+// Also checks support of |request| by this server.
+		bool ValidateRequestMethod(int connection_id, const std::string& request, const std::string& method);
 
-		std::shared_ptr<net::StreamListenSocket> server_;
-		typedef std::map<int, net::HttpConnection*> IdToConnectionMap;
-		IdToConnectionMap id_to_connection_;
-		typedef std::map<net::StreamListenSocket*, net::HttpConnection*> SocketToConnectionMap;
-		SocketToConnectionMap socket_to_connection_;
+// Processes http request after all preparations.
+		net::HttpStatusCode ProcessHttpRequest(const GURL& url, const net::HttpServerRequestInfo& info, std::string* response);
+
+// Provider API methods. Return reference to NULL if output should be empty.
+		void ProcessInfo(std::string* response, net::HttpStatusCode* status_code) const;
+
+// Port for listening.
+		in_port_t port_;
+
+// Contains encapsulated object for listening for requests.
+		std::shared_ptr<net::HttpServer> server_;
+
+// Message loop to direct all tasks towards.
+		chromium::MessageLoopForIO* message_loop_for_io_;
+
+		Delegate* delegate_;
 	};
 
 } /* namespace kigoron */

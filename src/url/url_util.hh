@@ -87,6 +87,22 @@ inline bool IsStandard(const char* spec,
 
 // URL library wrappers -------------------------------------------------------
 
+// Parses the given spec according to the extracted scheme type. Normal users
+// should use the URL object, although this may be useful if performance is
+// critical and you don't want to do the heap allocation for the std::string.
+//
+// As with the Canonicalize* functions, the charset converter can
+// be NULL to use UTF-8 (it will be faster in this case).
+//
+// Returns true if a valid URL was produced, false if not. On failure, the
+// output and parsed structures will still be filled and will be consistent,
+// but they will not represent a loadable URL.
+bool Canonicalize(const char* spec,
+                             int spec_len,
+                             bool trim_path_end,
+                             CanonOutput* output,
+                             Parsed* output_parsed);
+
 // String helper functions ----------------------------------------------------
 
 // Compare the lower-case form of the given string against the given ASCII

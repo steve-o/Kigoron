@@ -28,7 +28,7 @@ namespace net {
 
 // static
 std::shared_ptr<TCPListenSocket> TCPListenSocket::CreateAndListen(
-    kigoron::provider_t* message_loop_for_io,
+    chromium::MessageLoopForIO* message_loop_for_io,
     const string& ip, int port, StreamListenSocket::Delegate* del) {
   SocketDescriptor s = CreateAndBind(ip, port);
   if (s == kInvalidSocket)
@@ -38,7 +38,7 @@ std::shared_ptr<TCPListenSocket> TCPListenSocket::CreateAndListen(
   return std::move (sock);
 }
 
-TCPListenSocket::TCPListenSocket(kigoron::provider_t* message_loop_for_io,
+TCPListenSocket::TCPListenSocket(chromium::MessageLoopForIO* message_loop_for_io,
                                  SocketDescriptor s,
                                  StreamListenSocket::Delegate* del)
     : StreamListenSocket(message_loop_for_io, s, del) {
@@ -106,7 +106,7 @@ void TCPListenSocket::Accept() {
   socket_delegate_->DidAccept(this, std::static_pointer_cast<StreamListenSocket>(sock));
 }
 
-TCPListenSocketFactory::TCPListenSocketFactory(kigoron::provider_t* message_loop_for_io, const string& ip, int port)
+TCPListenSocketFactory::TCPListenSocketFactory(chromium::MessageLoopForIO* message_loop_for_io, const string& ip, int port)
     : message_loop_for_io_(message_loop_for_io),
       ip_(ip),
       port_(port) {
