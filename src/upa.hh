@@ -6,19 +6,15 @@
 
 #include <memory>
 
-/* Boost noncopyable base class */
-#include <boost/utility.hpp>
-
 #include "config.hh"
 
 namespace kigoron
 {
 
-	class upa_t :
-		boost::noncopyable
+	class upa_t
 	{
 	public:
-		upa_t (const config_t& config);
+		explicit upa_t (const config_t& config);
 		~upa_t();
 
 		bool Initialize();
