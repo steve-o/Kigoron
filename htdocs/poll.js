@@ -1,13 +1,18 @@
+// ES6 Harmony
 // Whole-script strict mode syntax
 "use strict";
 class KigoronPoller {
-	constructor(url) {
+// TBD: Named or default parameters not yet supported.
+	constructor(url, ping_interval, reconnect_interval) {
 		this.url = url;
+		this.ping_interval = ping_interval;
+		this.reconnect_interval = reconnect_interval;
 		this.sock = undefined;
 		this.poll_id = undefined;
-		this.retry_id = undefined;
+		this.reconnect_id = undefined;
 	}
 
+// WebSocket is immutable, recreate entire object to reconnect.
 	Connect() {
 		let new_sock = new WebSocket(this.url);
 		new_sock.onopen = (e) => this.OnOpen(e);
@@ -22,10 +27,7 @@ class KigoronPoller {
 	}
 
 	Close() {
-		if (typeof this.retry_id === "number") {
-			window.clearTimeout(this.retry_id);
-			this.retry_id = undefined;
-		}
+		this.CancelReconnect();
 		this.CancelPoll();
 		if (this.sock !== undefined) {
 			this.sock.close();
@@ -33,20 +35,33 @@ class KigoronPoller {
 		}
 	}
 
+// Reconnect if close is not clean.
 	OnClose(e) {
 		this.CancelPoll();
 		if (!e.wasClean) {
 			document.getElementById("status").textContent = "disconnected";
-			let timeout = 1000;
-			if (!document.hasFocus()) {
-				timeout *= 2;
-			}
-			this.retry_id = window.setTimeout(() => this.Connect(), timeout);
+			this.ScheduleReconnect();
 		}
 	}
 
+	ScheduleReconnect() {
+		let timeout = this.reconnect_interval;
+		if (!document.hasFocus()) {
+			timeout *= 2;
+		}
+		this.reconnect_id = window.setTimeout(() => this.Connect(), timeout);
+	}
+
+	CancelReconnect() {
+		if (typeof this.reconnect_id === "number") {
+			window.clearTimeout(this.reconnect_id);
+			this.reconnect_id = undefined;
+		}
+	}
+
+// Target 10fps in focus, 5fps out-of-focus but still visible, and paused if hidden.
 	SchedulePoll() {
-		let timeout = 100;
+		let timeout = this.ping_interval;
 		if (!document.hasFocus()) {
 			timeout *= 2;
 		}
@@ -95,7 +110,7 @@ class KigoronPoller {
 	}
 }
 
-let poller = new KigoronPoller("ws://" + window.location.host + "/ws");
+let poller = new KigoronPoller("ws://" + window.location.host + "/ws", 100, 1000);
 poller.Connect();
 
 document.addEventListener("visibilitychange", function() {
