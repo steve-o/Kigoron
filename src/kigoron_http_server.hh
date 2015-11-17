@@ -35,7 +35,8 @@ namespace kigoron
 		std::string hostname;
 		std::string username;
 		int pid;
-		std::vector<std::string> clients;
+		unsigned client_count;	/* all RSSL port connections, active or not */
+		unsigned msgs_received; /* all message types including metadata */
 	};
 
 	class KigoronHttpServer

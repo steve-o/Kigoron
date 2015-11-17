@@ -93,6 +93,7 @@ class KigoronPoller {
 		document.getElementById("username").textContent = msg.username;
 		document.getElementById("pid").textContent = msg.pid;
 		document.getElementById("clients").textContent = msg.clients;
+		document.getElementById("msgs").textContent = msg.msgs;
 	}
 
 	OnHidden() {

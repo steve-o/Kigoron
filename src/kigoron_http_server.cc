@@ -125,7 +125,8 @@ kigoron::KigoronHttpServer::OnWebSocketMessage (
 	dict->SetString("hostname", info.hostname);
 	dict->SetString("username", info.username);
 	dict->SetInteger("pid", info.pid);
-	dict->SetInteger("clients", info.clients.size());
+	dict->SetInteger("clients", info.client_count);
+	dict->SetInteger("msgs", info.msgs_received);
 	chromium::JSONWriter::Write(dict.get(), &response);
 
 	server_->SendOverWebSocket(connection_id, response);
@@ -194,7 +195,8 @@ kigoron::KigoronHttpServer::OnJsonRequestUI (
 		dict.SetString("hostname", info.hostname);
 		dict.SetString("username", info.username);
 		dict.SetInteger("pid", info.pid);
-		dict.SetInteger("clients", info.clients.size());
+		dict.SetInteger("clients", info.client_count);
+		dict.SetInteger("msgs", info.msgs_received);
 		SendJson(connection_id, net::HTTP_OK, &dict, std::string());
 	}
 
@@ -255,7 +257,8 @@ kigoron::KigoronHttpServer::GetDiscoveryPageHTML() const
 	ReplaceFirstSubstringAfterOffset (&response, 0, "%HOSTNAME%", info.hostname);
 	ReplaceFirstSubstringAfterOffset (&response, 0, "%USERNAME%", info.username);
 	ReplaceFirstSubstringAfterOffset (&response, 0, "%PID%", std::to_string (info.pid));
-	ReplaceFirstSubstringAfterOffset (&response, 0, "%CLIENTS%", std::to_string (info.clients.size()));
+	ReplaceFirstSubstringAfterOffset (&response, 0, "%CLIENTS%", std::to_string (info.client_count));
+	ReplaceFirstSubstringAfterOffset (&response, 0, "%MSGS%", std::to_string (info.msgs_received));
 
 	return response;
 }

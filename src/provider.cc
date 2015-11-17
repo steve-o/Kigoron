@@ -447,11 +447,10 @@ kigoron::provider_t::CreateInfo (
 	info->pid = getpid();
 
 /* clients */
-	info->clients.clear();
-	info->clients.reserve (connections_.size());
-	for (auto& handle : connections_) {
-		info->clients.emplace_back (handle->clientIP);
-	}
+	info->client_count = connections_.size();
+
+/* app level request count */
+	info->msgs_received = cumulative_stats_[PROVIDER_PC_RSSL_MSGS_RECEIVED];
 }
 
 void
