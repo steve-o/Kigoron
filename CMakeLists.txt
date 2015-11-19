@@ -120,15 +120,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /d2Zi+")
 #-----------------------------------------------------------------------------
 # source files
 
-set(cxx-sources
-	src/client.cc
-	src/config.cc
-	src/kigoron_http_server.cc
-	src/main.cc
-	src/kigoron.cc
-	src/provider.cc
-	src/upa.cc
-	src/upaostream.cc
+set(chromium-sources
+# base/
 	src/chromium/base64.cc
 	src/chromium/chromium_switches.cc
 	src/chromium/command_line.cc
@@ -155,43 +148,61 @@ set(cxx-sources
 	src/chromium/time/time_win.cc
 	src/chromium/values.cc
 	src/chromium/vlog.cc
-	src/googleurl/url_parse.cc
+# net/
+        src/net/base/ip_endpoint.cc
+        src/net/base/net_errors.cc
+        src/net/base/net_errors_win.cc
+        src/net/base/net_util.cc
+        src/net/http/http_byte_range.cc
+        src/net/http/http_request_headers.cc
+        src/net/http/http_status_code.cc
+        src/net/http/http_util.cc
+        src/net/socket/socket_descriptor.cc
+        src/net/socket/stream_listen_socket.cc
+        src/net/socket/tcp_listen_socket.cc
+        src/net/io_buffer.cc
+# http_server static library
+        src/net/server/http_connection.cc
+        src/net/server/http_server.cc
+        src/net/server/http_server_request_info.cc
+        src/net/server/http_server_response_info.cc
+        src/net/server/web_socket.cc
+# url/
+        src/url/gurl.cc
+        src/url/url_canon_etc.cc
+        src/url/url_canon_filesystemurl.cc
+        src/url/url_canon_fileurl.cc
+        src/url/url_canon_host.cc
+        src/url/url_canon_internal.cc
+        src/url/url_canon_ip.cc
+        src/url/url_canon_mailtourl.cc
+        src/url/url_canon_path.cc
+        src/url/url_canon_pathurl.cc
+        src/url/url_canon_query.cc
+        src/url/url_canon_stdstring.cc
+        src/url/url_canon_stdurl.cc
+        src/url/url_constants.cc
+        src/url/url_parse_file.cc
+        src/url/url_util.cc
+# url/third_party/mozilla/
+        src/googleurl/url_parse.cc
+# base/third_party/icu/
 	src/icu/icu_utf.cc
-	src/modp_b64/modp_b64.cc
-	src/net/base/ip_endpoint.cc
-	src/net/base/net_errors.cc
-	src/net/base/net_errors_win.cc
-	src/net/base/net_util.cc
-	src/net/http/http_byte_range.cc
-	src/net/http/http_request_headers.cc
-	src/net/http/http_status_code.cc
-	src/net/http/http_util.cc
-	src/net/server/http_connection.cc
-	src/net/server/http_server.cc
-	src/net/server/http_server_request_info.cc
-	src/net/server/http_server_response_info.cc
-	src/net/server/web_socket.cc
-	src/net/socket/socket_descriptor.cc
-	src/net/socket/stream_listen_socket.cc
-	src/net/socket/tcp_listen_socket.cc
-	src/net/io_buffer.cc
+# base/third_party/nspr/
 	src/nspr/prtime.cc
-	src/url/gurl.cc
-	src/url/url_canon_etc.cc
-	src/url/url_canon_filesystemurl.cc
-	src/url/url_canon_fileurl.cc
-	src/url/url_canon_host.cc
-	src/url/url_canon_internal.cc
-	src/url/url_canon_ip.cc
-	src/url/url_canon_mailtourl.cc
-	src/url/url_canon_path.cc
-	src/url/url_canon_pathurl.cc
-	src/url/url_canon_query.cc
-	src/url/url_canon_stdstring.cc
-	src/url/url_canon_stdurl.cc
-	src/url/url_constants.cc
-	src/url/url_parse_file.cc
-	src/url/url_util.cc
+# third_party/modp_b64/
+	src/modp_b64/modp_b64.cc
+)
+
+set(cxx-sources
+	src/client.cc
+	src/config.cc
+	src/kigoron_http_server.cc
+	src/main.cc
+	src/kigoron.cc
+	src/provider.cc
+	src/upa.cc
+	src/upaostream.cc
 )
 
 include_directories(
@@ -231,7 +242,11 @@ set(generated-sources
 #-----------------------------------------------------------------------------
 # output
 
-add_executable(Kigoron ${cxx-sources} ${generated-sources})
+add_executable(Kigoron
+	${cxx-sources}
+	${generated-sources}
+	${chromium-sources}
+)
 
 target_link_libraries(Kigoron
 	${UPA_LIBRARIES}
