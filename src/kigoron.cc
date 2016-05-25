@@ -152,10 +152,12 @@ kigoron::kigoron_t::Initialize ()
 
 /* Symbol list */
 		if (command_line->HasSwitch (switches::kSymbolPath)) {
-			boost::posix_time::time_duration reset_tod;
+			boost::posix_time::time_duration reset_tod (boost::date_time::not_a_date_time);
 			if (!config_.max_age.empty()) {
 				reset_tod = boost::posix_time::duration_from_string (config_.max_age);
 				LOG(INFO) << "Symbols set to expire when aged +" << reset_tod;
+			} else {
+				LOG(INFO) << "Symbols will not expire.";
 			}
 			std::vector<std::string> files;
 			config_.symbol_path = command_line->GetSwitchValueASCII (switches::kSymbolPath);
@@ -197,7 +199,7 @@ kigoron::kigoron_t::Initialize ()
 					if (columns.empty() || columns.at (COLUMN_RIC).empty())
 						continue;
 					const boost::posix_time::ptime last_modified (boost::posix_time::from_time_t (info.last_modified));
-					boost::posix_time::ptime max_age;
+					boost::posix_time::ptime max_age (boost::date_time::not_a_date_time);
 					if (!reset_tod.is_not_a_date_time()) {
 						max_age = last_modified + reset_tod;
 					}
@@ -377,7 +379,7 @@ kigoron::kigoron_t::WriteRaw (
 	if (!item->expiration_time.is_not_a_date_time()
 		&& now >= item->expiration_time)
 	{
-			response.state.dataState = RSSL_DATA_SUSPECT;
+		response.state.dataState = RSSL_DATA_SUSPECT;
 	}
 
 	rc = rsslSetEncodeIteratorBuffer (&it, &buf);
